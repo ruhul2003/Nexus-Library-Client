@@ -4,27 +4,55 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { FcGoogle } from "react-icons/fc";
 import { Lock, ArrowRight, BookOpen, At } from '@gravity-ui/icons';
+import { authClient } from '@/lib/auth-client'; // Import your client bundle
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  
+  // Track system operations
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    alert(`Logged in successfully with ${email}! (Demo)`);
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await authClient.signIn.email({
+        email,
+        password,
+      });
+
+      router.push('/readerDashboard');
+      router.refresh();
+    } catch (err) {
+      setError(err.message || "Invalid credentials. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGoogleSignIn = () => {
-    alert("Redirecting to Google Auth... (Demo)");
+  const handleGoogleSignIn = async () => {
+    try {
+      await authClient.signIn.social({
+        provider: "google"
+      });
+    } catch (err) {
+      setError(err.message || "Social login failed.");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex flex-col items-center justify-center p-6 selection:bg-violet-500 selection:text-white">
+    <div className="min-h-[80vh] items-center justify-center w-full flex flex-col p-6 selection:bg-violet-500 selection:text-white">
       <div className="max-w-md w-full space-y-6">
         
-        {/* Brand Header (Matching the capsule at the top of Screenshot 2026-06-18 144639.jpg) */}
+        {/* Brand Header */}
         <div className="text-center">
           <div className="inline-flex items-center gap-3 bg-white/5 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 shadow-xl">
             <BookOpen className="w-8 h-8 text-violet-400" />
@@ -43,6 +71,13 @@ export default function LoginPage() {
               <p className="text-slate-500 text-xs">Access your professional library network dashboard.</p>
             </div>
 
+            {/* Error Notification Alert */}
+            {error && (
+              <div className="mb-4 p-3 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-xl">
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleLogin} className="space-y-4">
               
               {/* Email Address */}
@@ -55,9 +90,10 @@ export default function LoginPage() {
                   <input
                     type="email"
                     required
+                    disabled={isLoading}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-11 pr-4 py-2.5 bg-[#eef2f6] border border-transparent rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 focus:bg-white transition-all text-sm"
+                    className="w-full pl-11 pr-4 py-2.5 bg-slate-100 focus:bg-white border border-slate-200/60 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all text-sm disabled:opacity-60"
                     placeholder="you@institution.edu"
                   />
                 </div>
@@ -78,9 +114,10 @@ export default function LoginPage() {
                   <input
                     type={showPassword ? "text" : "password"}
                     required
+                    disabled={isLoading}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-11 pr-12 py-2.5 bg-white border border-transparent rounded-xl text-slate-900 placeholder-slate-400 transition-all text-sm"
+                    className="w-full pl-11 pr-12 py-2.5 bg-slate-100 focus:bg-white border border-slate-200/60 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all text-sm disabled:opacity-60"
                     placeholder="••••••••••••"
                   />
                   <button
@@ -99,8 +136,9 @@ export default function LoginPage() {
                   type="checkbox"
                   id="rememberMe"
                   checked={rememberMe}
+                  disabled={isLoading}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 "
+                  className="w-4 h-4 rounded border-slate-300 accent-violet-600"
                 />
                 <label htmlFor="rememberMe" className="text-xs text-slate-500 select-none cursor-pointer">
                   Remember me on this browser
@@ -110,10 +148,11 @@ export default function LoginPage() {
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md shadow-violet-600/10 hover:shadow-violet-700/20 transition-all active:scale-[0.99] flex items-center justify-center gap-2 group text-sm"
+                disabled={isLoading}
+                className="w-full bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 text-white font-semibold py-3 px-4 rounded-xl shadow-md shadow-violet-600/10 hover:shadow-violet-700/20 transition-all active:scale-[0.99] flex items-center justify-center gap-2 group text-sm disabled:transform-none disabled:cursor-not-allowed"
               >
-                Sign In
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                {isLoading ? "Signing In..." : "Sign In"}
+                {!isLoading && <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />}
               </button>
             </form>
 
@@ -131,7 +170,8 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={handleGoogleSignIn}
-              className="w-full flex items-center justify-center gap-3 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold py-2.5 px-4 rounded-xl transition-colors active:scale-[0.99] text-sm shadow-sm"
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-3 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold py-2.5 px-4 rounded-xl transition-colors active:scale-[0.99] text-sm shadow-sm disabled:opacity-50"
             >
               <FcGoogle className="w-4 h-4" />
               Continue with Google
@@ -141,7 +181,7 @@ export default function LoginPage() {
 
         {/* Footer Link */}
         <p className="text-center text-sm text-slate-400">
-          Don't have an account yet?{' '}
+          Do not have an account yet?{' '}
           <Link href="/signup" className="text-violet-400 hover:text-violet-300 transition-colors font-semibold underline underline-offset-4">
             Sign up
           </Link>

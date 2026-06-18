@@ -3,73 +3,61 @@
 import Link from 'next/link';
 
 const navLinks = [
-  {
-    name: 'Browse Books',
-    path: '/books',
-  },
-  {
-    name: 'Categories',
-    path: '/categories',
-  },
-  {
-    name: 'About',
-    path: '/about',
-  },
-  {
-    name: 'Contact',
-    path: '/contact',
-  },
+  { name: 'Browse Books', path: '/books' },
+  { name: 'Categories', path: '/categories' },
+  { name: 'About', path: '/about' },
+  { name: 'Contact', path: '/contact' },
 ];
 
 const NavBar = () => {
   return (
-    <header className="w-full bg-linear-to-br from-slate-900 justify-center items-center py-auto via-indigo-950 to-slate-950">
-      <nav className="w-full flex justify-center items-center py-4 px-4">
-      <div className="w-full max-w-7xl bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl px-8 py-4 flex items-center justify-between shadow-xl">
-        
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-lg bg-linear-to-r from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
-            L
+    // Removed the background gradient to make the floating capsule blend seamlessly
+    <header className="w-full z-50 transition-all sticky top-0">
+      <nav className="w-full flex justify-center items-center pt-6 px-4 md:px-8">
+        <div className="w-full max-w-7xl bg-slate-950/40 backdrop-blur-md border border-white/10 rounded-2xl px-6 py-3.5 flex items-center justify-between shadow-2xl shadow-indigo-950/20">
+          
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-9 h-9 rounded-xl bg-linear-to-tr from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+              L
+            </div>
+            <h1 className="text-xl font-bold tracking-tight text-white">
+              Library<span className="bg-linear-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">Nexus</span>
+            </h1>
+          </Link>
+
+          {/* Navigation Links */}
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                href={link.path}
+                className="text-slate-300 hover:text-white transition duration-200 relative after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-indigo-500 hover:after:w-full after:transition-all"
+              >
+                {link.name}
+              </Link>
+            ))}
           </div>
 
-          <h1 className="text-2xl font-bold">
-            <span className="text-blue-500">Library</span>
-            <span className="text-purple-500"> Nexus</span>
-          </h1>
-        </Link>
-
-        {/* Navigation Links */}
-        <div className="hidden md:flex items-center gap-10 text-gray-300">
-          {navLinks.map((link) => (
+          {/* Auth Buttons */}
+          <div className="flex items-center gap-5">
             <Link
-              key={link.path}
-              href={link.path}
-              className="hover:text-white text-lg font-bold transition duration-300"
+              href="/auth/login"
+              className="text-sm font-semibold text-slate-300 hover:text-white transition duration-200"
             >
-              {link.name}
+              Sign In
             </Link>
-          ))}
-        </div>
 
-        {/* Auth Buttons */}
-        <div className="flex items-center gap-4">
-          <Link
-            href="/auth/login"
-            className="text-indigo-700 hover:text-indigo-300 transition duration-300"
-          >
-            Sign In
-          </Link>
+            <Link
+              href="/auth/signup"
+              className="bg-white hover:bg-slate-100 text-slate-950 text-sm font-semibold px-4 py-2.5 rounded-xl active:scale-[0.98] transition duration-200 shadow-md shadow-white/5"
+            >
+              Get Started
+            </Link>
+          </div>
 
-          <Link
-            href="/auth/signup"
-            className="bg-linear-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:scale-105 transition duration-300 shadow-lg"
-          >
-            Get Started
-          </Link>
         </div>
-      </div>
-    </nav>
+      </nav>
     </header>
   );
 };

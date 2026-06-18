@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { FcGoogle } from "react-icons/fc";
 import { Envelope, Lock, ArrowRight, BookOpen, Person } from '@gravity-ui/icons';
+import { authClient } from '@/lib/auth-client';
 
 export default function SignupPage() {
   const [firstName, setFirstName] = useState('');
@@ -12,20 +13,41 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [userType, setUserType] = useState('reader');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
-    alert(`Account created successfully for ${firstName} as a ${userType}! (Demo)`);
+    setIsLoading(true); // Turn on loading state
+    setError(null);
+
+    try {
+      await authClient.signUp.email({
+        email,
+        password,
+        name: `${firstName} ${lastName}`.trim(),
+        role: userType,
+        redirect: '/auth/login',
+      });
+
+      alert(`Signed up successfully with ${email}!`);
+    } catch (err) {
+      setError(err.message || "An error occurred during signup.");
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+
 
   const handleGoogleSignIn = () => {
     alert("Redirecting to Google Auth... (Demo)");
   };
 
   return (
-    <div className=" bg-linear-to-br from-slate-900 via-indigo-950 to-slate-950 flex items-center justify-center p-6 selection:bg-violet-500 selection:text-white">
+    <div className="w-full flex items-center justify-center p-6 selection:bg-violet-500 selection:text-white">
       <div className="max-w-2xl w-full space-y-8">
-        
+
         {/* Brand Header */}
         <div className="text-center">
           <div className="inline-flex items-center gap-3 bg-white/5 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 shadow-xl">
@@ -46,10 +68,10 @@ export default function SignupPage() {
             </div>
 
             <form onSubmit={handleSignup} className="space-y-6">
-              
+
               {/* 2-Column Grid for Input Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                
+
                 {/* First Name */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">First Name</label>
@@ -162,10 +184,11 @@ export default function SignupPage() {
               {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3.5 px-4 rounded-xl shadow-lg shadow-violet-600/20 hover:shadow-violet-700/30 transition-all active:scale-[0.99] flex items-center justify-center gap-2 group text-sm"
+                disabled={isLoading}
+                className="w-full bg-violet-600 hover:bg-violet-700 disabled:bg-violet-400 text-white font-semibold py-3.5 px-4 rounded-xl ... flex items-center justify-center gap-2 group text-sm"
               >
-                Sign Up
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                {isLoading ? "Creating Account..." : "Sign Up"}
+                {!isLoading && <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />}
               </button>
             </form>
 
