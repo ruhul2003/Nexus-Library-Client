@@ -10,6 +10,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'images.unsplash.com', // Added to allow premium carousel images
       },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      }
     ],
   },
 };

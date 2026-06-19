@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  
+
   // Track system operations
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -38,20 +38,30 @@ export default function LoginPage() {
     }
   };
 
+  // Modify only your handleGoogleSignIn function inside LoginPage to mirror this metadata logic:
   const handleGoogleSignIn = async () => {
     try {
+      setIsLoading(true);
       await authClient.signIn.social({
-        provider: "google"
+        provider: "google",
+        callbackURL: '/readerDashboard',
+        newUserOptions: {
+          data: {
+            role: "reader" // Default fallback if they sign in from the login page directly
+          }
+        }
       });
     } catch (err) {
       setError(err.message || "Social login failed.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="min-h-[80vh] items-center justify-center w-full flex flex-col p-6 selection:bg-violet-500 selection:text-white">
       <div className="max-w-md w-full space-y-6">
-        
+
         {/* Brand Header */}
         <div className="text-center">
           <div className="inline-flex items-center gap-3 bg-white/5 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 shadow-xl">
@@ -79,7 +89,7 @@ export default function LoginPage() {
             )}
 
             <form onSubmit={handleLogin} className="space-y-4">
-              
+
               {/* Email Address */}
               <div>
                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Email Address</label>

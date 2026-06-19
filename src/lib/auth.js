@@ -12,8 +12,6 @@ export const auth = betterAuth({
   database: mongodbAdapter(db, {
     client
   }),
-
-  // Map additional fields coming from the client into your DB
   user: {
     additionalFields: {
       role: {
@@ -21,6 +19,13 @@ export const auth = betterAuth({
         required: false,
         defaultValue: "reader", // Set default to 'reader' matching your UX
       },
+    },
+  },
+  socialProviders: {
+    google: {
+      enabled: true,
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_SECRET,
     },
   },
 });

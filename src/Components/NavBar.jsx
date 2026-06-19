@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation'; // Imported for active route tracking
 import { authClient } from '@/lib/auth-client';
 import { Person, ArrowRightFromSquare } from '@gravity-ui/icons';
 import Image from 'next/image';
@@ -14,6 +15,7 @@ const navLinks = [
 ];
 
 const NavBar = () => {
+  const pathname = usePathname(); // Extract the current active URL path
   const session = authClient.useSession();
   const isLoggedIn = !!session?.data;
   const user = session?.data?.user;
@@ -40,15 +42,24 @@ const NavBar = () => {
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                href={link.path}
-                className="text-slate-300 hover:text-white transition duration-200 relative after:absolute after:bottom-[-4px] after:left-0 after:w-0 after:h-[2px] after:bg-indigo-500 hover:after:w-full after:transition-all"
-              >
-                {link.name}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              // Check if the current link path matches the current active route
+              const isActive = pathname === link.path;
+
+              return (
+                <Link
+                  key={link.path}
+                  href={link.path}
+                  className={`transition duration-200 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:bg-indigo-500 after:transition-all ${
+                    isActive 
+                      ? 'text-indigo-400 after:w-full' 
+                      : 'text-slate-300 hover:text-white after:w-0 hover:after:w-full'
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Auth/Profile Section */}
@@ -59,7 +70,11 @@ const NavBar = () => {
                 {/* Profile Link Badge */}
                 <Link 
                   href="/readerDashboard" 
-                  className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-3 py-1.5 transition text-sm font-medium text-white max-w-[160px]"
+                  className={`flex items-center gap-2 bg-white/5 hover:bg-white/10 border rounded-xl px-3 py-1.5 transition text-sm font-medium max-w-[160px] ${
+                    pathname === '/readerDashboard' 
+                      ? 'border-indigo-500 text-indigo-400' 
+                      : 'border-white/10 text-white'
+                  }`}
                 >
                   {user?.image ? (
                     <Image 
@@ -70,7 +85,11 @@ const NavBar = () => {
                       height={20}
                     />
                   ) : (
-                    <Person className="w-4 h-4 text-indigo-400" />
+                    <img 
+                      src={user?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop"} 
+                      alt="avatar" 
+                      className="w-5 h-5 rounded-full object-cover border border-white/20"
+                    />
                   )}
                   <span className="truncate max-w-[90px]">
                     {user?.name || "Account"}
