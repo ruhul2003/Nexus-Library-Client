@@ -2,9 +2,9 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Star, Bookmark, Layers } from '@gravity-ui/icons';
-import SearchFilter from './SearchFilter'; // We will create this next!
+import SearchFilter from './SearchFilter'; 
 
-// Force Next.js to fetch fresh data from your Express backend on every request
+
 export const revalidate = 0;
 
 const BooksPage = async ({ searchParams }) => {
@@ -40,17 +40,14 @@ const BooksPage = async ({ searchParams }) => {
   return (
     <div className="w-10/12 mx-auto mt-10 space-y-8 animate-in fade-in duration-500">
       
-      {/* Header and Integrated Search Field */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white">Universal Catalog</h1>
           <p className="text-slate-400 text-xs md:text-sm mt-1">Explore curated technical repositories and premium documentation manuals.</p>
         </div>
-        {/* Render our client routing search companion input */}
         <SearchFilter currentQuery={query} />
       </div>
 
-      {/* Dynamic Grid Layout Generation */}
       {filteredBooks.length === 0 ? (
         <div className="text-center py-20 border border-dashed border-white/5 rounded-3xl bg-white/[0.01]">
           <p className="text-slate-500 text-sm">No items found matching current index parameters.</p>
@@ -63,8 +60,7 @@ const BooksPage = async ({ searchParams }) => {
               className="group relative bg-slate-900/20 hover:bg-slate-900/40 border border-white/10 hover:border-white/20 rounded-2xl p-4 flex flex-col justify-between transition-all duration-300 shadow-xl backdrop-blur-xs hover:-translate-y-1"
             >
               <div>
-                {/* Book Cover Container Frame Block */}
-                <div className="relative w-full aspect-[4/5] rounded-xl overflow-hidden bg-slate-950 border border-white/5 mb-4">
+                <div className="relative w-full aspect-4/5 rounded-xl overflow-hidden bg-slate-950 border border-white/5 mb-4">
                   <Image
                     src={book.coverImage}
                     alt={book.title}

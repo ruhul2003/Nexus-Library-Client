@@ -49,7 +49,7 @@ const Featured = async () => {
           >
             <div>
               {/* Image Frame Block */}
-              <div className="relative w-full aspect-[4/5] rounded-xl overflow-hidden bg-slate-950 border border-white/5 mb-4">
+              <div className="relative w-full aspect-4/5 rounded-xl overflow-hidden bg-slate-950 border border-white/5 mb-4">
                 <Image
                   src={book.coverImage}
                   alt={book.title}

@@ -41,7 +41,7 @@ const BookDetailsPage = async ({ params }) => {
   return (
     <div className="w-full space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto pb-16">
       
-      {/* Retrospective Navigation Handle */}
+
       <Link 
         href="/books" 
         className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white transition group"
@@ -50,12 +50,12 @@ const BookDetailsPage = async ({ params }) => {
         Back to Universal Catalog
       </Link>
 
-      {/* Main Splitscreen Layout Deck */}
+
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start">
         
-        {/* Left Column Aspect: Premium Cover Presentation Grid */}
+        
         <div className="md:col-span-5 lg:col-span-4 w-full max-w-sm mx-auto md:max-w-none">
-          <div className="relative aspect-[4/5] w-full rounded-3xl overflow-hidden bg-slate-950 border border-white/10 shadow-2xl shadow-indigo-950/40 group">
+          <div className="relative aspect-4/5 w-full rounded-3xl overflow-hidden bg-slate-950 border border-white/10 shadow-2xl shadow-indigo-950/40 group">
             <Image
               src={book.coverImage}
               alt={book.title}
@@ -64,15 +64,12 @@ const BookDetailsPage = async ({ params }) => {
               sizes="(max-w-6xl) 33vw"
               className="object-cover"
             />
-            {/* Ambient inner border glow overlay */}
             <div className="absolute inset-0 border border-white/10 rounded-3xl pointer-events-none" />
           </div>
         </div>
 
-        {/* Right Column Aspect: Structured Detail Spec Table */}
         <div className="md:col-span-7 lg:col-span-8 space-y-6">
           
-          {/* Metadata Badges Row */}
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-[11px] font-extrabold uppercase tracking-widest bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-full">
               {book.category}
@@ -83,7 +80,6 @@ const BookDetailsPage = async ({ params }) => {
             </div>
           </div>
 
-          {/* Book Titles & Creators Info */}
           <div className="space-y-2">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white leading-tight">
               {book.title}
@@ -95,7 +91,6 @@ const BookDetailsPage = async ({ params }) => {
 
           <hr className="border-white/5" />
 
-          {/* Description Block */}
           <div className="space-y-2.5">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Synopsis</h3>
             <p className="text-slate-300 text-sm md:text-base leading-relaxed">
@@ -103,7 +98,6 @@ const BookDetailsPage = async ({ params }) => {
             </p>
           </div>
 
-          {/* Dynamic Interactive Tags Cloud */}
           {book.tags && book.tags.length > 0 && (
             <div className="space-y-2.5">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Indexed Tags</h3>
@@ -122,7 +116,6 @@ const BookDetailsPage = async ({ params }) => {
 
           <hr className="border-white/5" />
 
-          {/* Real-time Inventory Ledger Grid */}
           <div className="grid grid-cols-2 gap-4 max-w-md">
             <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex flex-col justify-center">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Available Quantities</span>
@@ -147,7 +140,6 @@ const BookDetailsPage = async ({ params }) => {
             </div>
           </div>
 
-          {/* Check-Out / Borrow Interaction Buttons Row */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4 max-w-md">
             <button
               disabled={book.availableCopies === 0}
