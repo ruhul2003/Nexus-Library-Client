@@ -272,8 +272,11 @@ export default function BooksGridClient({ filteredBooks }) {
                     </motion.h3>
                   </motion.div>
 
-                  <motion.div variants={textItemVariants}>
+                  <motion.div variants={textItemVariants} className="flex items-center justify-between gap-2">
                     <p className="text-xs text-slate-400 font-medium">By {book.author}</p>
+                    <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20 whitespace-nowrap">
+                      ${book.price || "0.00"}
+                    </span>
                   </motion.div>
 
                   {/* Enhanced Star Rating with animations */}

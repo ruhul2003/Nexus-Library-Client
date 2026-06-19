@@ -114,12 +114,17 @@ export default function FeaturedClient({ featuredBooks }) {
                 </motion.div>
               </motion.div>
 
-              {/* Book Info */}
+              {/* Book Info row containing styled price matrix */}
               <motion.div className="space-y-1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: index * 0.1 + 0.2 }}>
                 <h3 className="font-bold text-white tracking-tight line-clamp-1 group-hover:text-indigo-400 transition-colors">
                   {book.title}
                 </h3>
-                <p className="text-xs text-slate-400 font-medium">By {book.author}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs text-slate-400 font-medium">By {book.author}</p>
+                  <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20 whitespace-nowrap">
+                    ${book.price || "0.00"}
+                  </span>
+                </div>
               </motion.div>
 
               {/* Rating and Availability Matrix */}
@@ -144,7 +149,7 @@ export default function FeaturedClient({ featuredBooks }) {
             <motion.div className="mt-5 pt-3 border-t border-white/5 flex items-center gap-2" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: index * 0.1 + 0.5 }}>
               <motion.div className="flex-1" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link href={`/books/${book.id || book._id}`} className="block bg-white hover:bg-slate-100 text-center text-slate-950 font-bold text-xs py-2 px-3 rounded-xl transition duration-200">
-                  View Profile
+                  View Details
                 </Link>
               </motion.div>
               <motion.button className="p-2 bg-white/5 hover:bg-white/10 border border-white/5 text-slate-400 hover:text-white rounded-xl transition" whileHover={{ scale: 1.1, rotate: [0, -10, 10, 0], transition: { duration: 0.3 } }} whileTap={{ scale: 0.9 }}>

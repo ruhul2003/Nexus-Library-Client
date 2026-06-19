@@ -41,7 +41,6 @@ const BookDetailsPage = async ({ params }) => {
   return (
     <div className="w-full space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto pb-16">
 
-
       <Link
         href="/books"
         className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white transition group"
@@ -50,9 +49,7 @@ const BookDetailsPage = async ({ params }) => {
         Back to Universal Catalog
       </Link>
 
-
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start">
-
 
         <div className="md:col-span-5 lg:col-span-4 w-full max-w-sm mx-auto md:max-w-none">
           <div className="relative aspect-4/5 w-full rounded-3xl overflow-hidden bg-slate-950 border border-white/10 shadow-2xl shadow-indigo-950/40 group">
@@ -116,7 +113,15 @@ const BookDetailsPage = async ({ params }) => {
 
           <hr className="border-white/5" />
 
-          <div className="grid grid-cols-2 gap-4 max-w-md">
+          {/* Updated structural pricing and details layout matrix */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-xl">
+            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex flex-col justify-center">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Purchase Price</span>
+              <span className="text-xl font-black mt-1 text-emerald-400">
+                ${book.price || "0.00"}
+              </span>
+            </div>
+
             <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex flex-col justify-center">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Available Quantities</span>
               <span className={`text-xl font-black mt-1 ${book.availableCopies > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
@@ -140,16 +145,16 @@ const BookDetailsPage = async ({ params }) => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4 max-w-md">
-
-            <form action="/api/checkout_sessions" method="POST">
-              <section>
-                <button type="submit" role="link">
-                  Order Now
-                </button>
-              </section>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4 max-w-xl w-full">
+            <form action="/api/checkout_sessions" method="POST" className="flex-1">
+              <button 
+                type="submit" 
+                role="link"
+                className="w-full block bg-linear-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-center text-white font-bold text-sm py-3 px-6 rounded-xl transition duration-200 shadow-lg hover:shadow-indigo-500/30"
+              >
+                Order Now
+              </button>
             </form>
-
 
             <button
               className="p-3.5 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white rounded-xl transition flex items-center justify-center"
