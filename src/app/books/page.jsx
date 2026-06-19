@@ -38,7 +38,7 @@ const BooksPage = async ({ searchParams }) => {
   }
 
   return (
-    <div className="w-10/12 mx-auto mt-16 space-y-8 animate-in fade-in duration-500">
+    <div className="w-10/12 mx-auto mt-10 space-y-8 animate-in fade-in duration-500">
       
       {/* Header and Integrated Search Field */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
