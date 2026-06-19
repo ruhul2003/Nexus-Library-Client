@@ -29,7 +29,7 @@ export default function ReaderDashboard() {
   const [viewMode, setViewMode] = useState('grid'); // grid | list
 
   return (
-    <div className="bg-transparent space-y-8 animate-in fade-in duration-500">
+    <div className="bg-transparent w-10/12 mx-auto mt-16 space-y-8 animate-in fade-in duration-500">
       
       {/* 1. Dashboard Welcome Banner */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-6">

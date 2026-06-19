@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, BookOpen, Star, Flame } from '@gravity-ui/icons';
 import Image from 'next/image';
+import Link from 'next/link';
+import { authClient } from '@/lib/auth-client';
 
 const slides = [
   {
@@ -33,6 +35,10 @@ const slides = [
 
 const ReaderBanner = () => {
   const [current, setCurrent] = useState(0);
+  
+  // Cleaned up syntax error and placed hook inside the component layout
+  const session = authClient.useSession();
+  const isLoggedIn = !!session?.data;
 
   const nextSlide = useCallback(() => {
     setCurrent((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
@@ -104,6 +110,16 @@ const ReaderBanner = () => {
               ))}
             </div>
 
+            {/* Dynamic Authenticated Call to Action Button Row */}
+            <div className="pt-4">
+              <Link
+                href={isLoggedIn ? "/books" : "/auth/login"}
+                className="inline-flex items-center justify-center px-8 py-3.5 text-sm font-semibold text-white rounded-xl shadow-lg transition-all duration-300 transform active:scale-95 bg-linear-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 hover:shadow-indigo-500/20 border border-white/10 backdrop-blur-xs"
+              >
+                {isLoggedIn ? "Browse Books" : "Get Started"}
+              </Link>
+            </div>
+
           </div>
         </div>
       ))}
@@ -125,7 +141,6 @@ const ReaderBanner = () => {
         <ChevronRight className="w-5 h-5" />
       </button>
 
-      {/* 3. Linear Progress Track Indicators */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2.5 z-20">
         {slides.map((_, dotIdx) => (
           <button
