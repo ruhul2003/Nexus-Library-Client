@@ -85,8 +85,10 @@ const NavBar = () => {
                       height={20}
                     />
                   ) : (
-                    <img 
+                    <Image 
                       src={user?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop"} 
+                      width={20}
+                      height={20}
                       alt="avatar" 
                       className="w-5 h-5 rounded-full object-cover border border-white/20"
                     />

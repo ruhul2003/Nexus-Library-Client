@@ -206,7 +206,7 @@ export default function BooksGridClient({ filteredBooks }) {
                     variants={shimmerVariants}
                     initial="initial"
                     animate={isHovered ? "hover" : "initial"}
-                    className="absolute inset-0 z-20 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none"
+                    className="absolute inset-0 z-20 bg-linear-to-r from-transparent via-white/20 to-transparent pointer-events-none"
                   />
 
                   {/* Image with parallax */}
@@ -325,7 +325,7 @@ export default function BooksGridClient({ filteredBooks }) {
                 >
                   <Link 
                     href={`/books/${book.id || book._id}`}
-                    className="flex-1 block bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-center text-white font-bold text-xs py-2.5 px-3 rounded-xl transition duration-200 active:scale-98 shadow-lg hover:shadow-indigo-500/50"
+                    className="flex-1 block bg-linear-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-center text-white font-bold text-xs py-2.5 px-3 rounded-xl transition duration-200 active:scale-98 shadow-lg hover:shadow-indigo-500/50"
                   >
                     View Details
                   </Link>

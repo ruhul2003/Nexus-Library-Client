@@ -14,12 +14,12 @@ const BookDetailsPage = async ({ params }) => {
 
   try {
     const res = await fetch(`http://localhost:5000/api/books/${id}`, { cache: 'no-store' });
-    
+
     if (!res.ok) {
       if (res.status === 404) throw new Error('The requested book resource does not exist inside our active index.');
       throw new Error('Failed to download book profile data stream.');
     }
-    
+
     book = await res.json();
   } catch (err) {
     error = err.message;
@@ -40,10 +40,10 @@ const BookDetailsPage = async ({ params }) => {
 
   return (
     <div className="w-full space-y-8 animate-in fade-in duration-500 max-w-6xl mx-auto pb-16">
-      
 
-      <Link 
-        href="/books" 
+
+      <Link
+        href="/books"
         className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white transition group"
       >
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -52,8 +52,8 @@ const BookDetailsPage = async ({ params }) => {
 
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start">
-        
-        
+
+
         <div className="md:col-span-5 lg:col-span-4 w-full max-w-sm mx-auto md:max-w-none">
           <div className="relative aspect-4/5 w-full rounded-3xl overflow-hidden bg-slate-950 border border-white/10 shadow-2xl shadow-indigo-950/40 group">
             <Image
@@ -69,7 +69,7 @@ const BookDetailsPage = async ({ params }) => {
         </div>
 
         <div className="md:col-span-7 lg:col-span-8 space-y-6">
-          
+
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-[11px] font-extrabold uppercase tracking-widest bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-full">
               {book.category}
@@ -103,8 +103,8 @@ const BookDetailsPage = async ({ params }) => {
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Indexed Tags</h3>
               <div className="flex flex-wrap gap-2">
                 {book.tags.map((tag, idx) => (
-                  <span 
-                    key={idx} 
+                  <span
+                    key={idx}
                     className="text-xs font-medium text-slate-300 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl hover:bg-white/10 transition"
                   >
                     #{tag}
@@ -123,7 +123,7 @@ const BookDetailsPage = async ({ params }) => {
                 {book.availableCopies} / {book.totalCopies} Units
               </span>
             </div>
-            
+
             <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex flex-col justify-center">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Pipeline Status</span>
               <span className={`text-sm font-bold mt-1.5 inline-flex items-center gap-1.5 ${book.availableCopies > 0 ? 'text-indigo-400' : 'text-slate-400'}`}>
@@ -141,14 +141,17 @@ const BookDetailsPage = async ({ params }) => {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4 max-w-md">
+
+            <form action="/api/checkout_sessions" method="POST">
+              <section>
+                <button type="submit" role="link">
+                  Order Now
+                </button>
+              </section>
+            </form>
+
+
             <button
-              disabled={book.availableCopies === 0}
-              className="flex-1 bg-linear-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 disabled:from-white/5 disabled:to-white/5 disabled:text-slate-600 text-white font-bold text-sm py-3.5 px-6 rounded-xl shadow-lg shadow-indigo-500/10 transition transform active:scale-98"
-            >
-              {book.availableCopies > 0 ? 'Borrow E-Book' : 'Place Hold Queue'}
-            </button>
-            
-            <button 
               className="p-3.5 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white rounded-xl transition flex items-center justify-center"
               title="Add to Vault Saved Reading List"
             >
