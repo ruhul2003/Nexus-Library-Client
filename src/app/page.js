@@ -1,5 +1,7 @@
 import Banner from "@/Components/Banner"; 
 import Featured from "@/Components/Featured"; 
+import TopLibrariansSection from "@/Components/TopLibrarians";
+import PopularCategories from "@/Components/PopularCategories";
 
 export default function Home() {
   return (
@@ -11,6 +13,14 @@ export default function Home() {
 
       <div className="max-w-7xl mx-auto px-4 md:px-8 w-full space-y-12">
         <Featured />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 md:px-8 w-full space-y-12">
+        <TopLibrariansSection />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 md:px-8 w-full space-y-12">
+        <PopularCategories />
       </div>
 
     </div>

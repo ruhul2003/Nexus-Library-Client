@@ -69,9 +69,9 @@ const NavBar = () => {
               <div className="flex items-center gap-4">
                 {/* Profile Link Badge */}
                 <Link 
-                  href="/readerDashboard" 
+                  href="/dashboard/reader" 
                   className={`flex items-center gap-2 bg-white/5 hover:bg-white/10 border rounded-xl px-3 py-1.5 transition text-sm font-medium max-w-[160px] ${
-                    pathname === '/readerDashboard' 
+                    pathname === '/dahboard/reader' 
                       ? 'border-indigo-500 text-indigo-400' 
                       : 'border-white/10 text-white'
                   }`}

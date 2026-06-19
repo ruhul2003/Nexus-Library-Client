@@ -29,7 +29,7 @@ export default function LoginPage() {
         password,
       });
 
-      router.push('/readerDashboard');
+      router.push('/dashboard/reader');
       router.refresh();
     } catch (err) {
       setError(err.message || "Invalid credentials. Please try again.");
@@ -44,7 +44,7 @@ export default function LoginPage() {
       setIsLoading(true);
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: '/readerDashboard',
+        callbackURL: '/dashboard/reader',
         newUserOptions: {
           data: {
             role: "reader" // Default fallback if they sign in from the login page directly

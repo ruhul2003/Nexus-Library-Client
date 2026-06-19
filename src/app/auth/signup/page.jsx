@@ -78,7 +78,7 @@ export default function SignupPage() {
       setIsLoading(true);
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: '/readerDashboard',
+        callbackURL: '/dashboard/reader',
         newUserOptions: {
           data: {
             role: userType
