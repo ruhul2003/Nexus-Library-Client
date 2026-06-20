@@ -4,56 +4,80 @@ import { useState } from 'react';
 import { 
   BookOpen, 
   Bookmark, 
-  Clock, 
-  Magnifier, 
-  ArrowRight, 
   LayoutCells,    
-  LayoutList, 
-  ArrowUpRight,  
   Person,
   Pencil,
-  TrashBin,       
+  TrashBin,      
   Bars,          
   Xmark,          
   ShieldCheck, 
   CircleCheck, 
-  ShoppingBag,    
   Receipt,
-  Trolley
+  Trolley,
+  Magnifier
 } from '@gravity-ui/icons';
 import { authClient } from '@/lib/auth-client';
+import Image from 'next/image';
 
 export default function UserReaderDashboard() {
+  // 1. Session Engine Context
+  const sessionQuery = authClient.useSession();
+  const user = sessionQuery.data?.user;
+  const isLoadingSession = sessionQuery.isPending;
 
-    const user = authClient.useSession().data?.user;
-    console.log(user);
-
+  // 2. Navigation & UI Layout States
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  
-  const [activeTab, setActiveTab] = useState('overview'); // overview | delivery | gallery | reviews
+  const [activeTab, setActiveTab] = useState('overview'); 
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid');
 
+  // 3. Mutation Pipelines & Dynamic Memory Stores
   const [reviews, setReviews] = useState([
-    { id: 1, title: "The Clean Architecture Guide", rating: 5, date: "2026-05-10", comment: "Absolutely essential reading for structuring decoupled Next.js systems." },
-    { id: 2, title: "Refactoring UI", rating: 4, date: "2026-04-18", comment: "Practical visual advice. Completely reshaped how I think about dark-mode layout spacing." }
+    { id: 1, title: "The Clean Architecture Guide", date: "2026-05-10", comment: "Absolutely essential reading for structuring decoupled Next.js systems." },
+    { id: 2, title: "Refactoring UI", date: "2026-04-18", comment: "Practical visual advice. Completely reshaped how I think about dark-mode layout spacing." }
   ]);
   const [editingReviewId, setEditingReviewId] = useState(null);
   const [editText, setEditText] = useState('');
 
-  const deliveryHistory = [
-    { id: 401, title: "Designing Data-Intensive Applications", fee: "$2.50", date: "2026-06-15", status: "Delivered" },
-    { id: 402, title: "Compilers: Principles, Techniques, and Tools", fee: "$4.00", date: "2026-06-19", status: "Dispatched" },
-    { id: 403, title: "Microservices Architecture Patterns", fee: "$1.75", date: "2026-06-20", status: "Pending" }
-  ];
+  const [deliveryHistory, setDeliveryHistory] = useState([
+    { id: 401, title: "Designing Data-Intensive Applications", fee: 2.50, date: "2026-06-15", status: "Delivered" },
+    { id: 402, title: "Compilers: Principles, Techniques, and Tools", fee: 4.00, date: "2026-06-19", status: "Dispatched" },
+    { id: 403, title: "Microservices Architecture Patterns", fee: 1.75, date: "2026-06-20", status: "Pending" }
+  ]);
 
-  const readingListGallery = [
+  const [readingListGallery, setReadingListGallery] = useState([
     { id: 501, title: "Design Systems in Production", author: "Alla Kholmatova", image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300", category: "Design" },
     { id: 502, title: "Don't Make Me Think", author: "Steve Krug", image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=300", category: "UX Research" },
     { id: 503, title: "The Clean Architecture Guide", author: "Robert C. Martin", image: "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=300", category: "Tech" }
-  ];
+  ]);
 
-  // Inline functional components mapping status tokens to styled badges
+  // 4. Dynamic Analytics Metrics Engine (Derived State Calculations)
+  const booksReadCount = readingListGallery.length;
+  const pendingDeliveriesCount = deliveryHistory.filter(item => item.status !== 'Delivered').length;
+  const totalFeesSpent = deliveryHistory.reduce((acc, item) => acc + item.fee, 0);
+
+  // Generate dynamic data mapping segments based on current structural states
+  const analyticalGraphData = deliveryHistory.map((item) => ({
+    id: item.id,
+    percentage: Math.min(100, Math.max(20, (item.fee / 5) * 100))
+  }));
+
+  // Filtering Logic matching structural query parameters
+  const filteredDeliveryHistory = deliveryHistory.filter(item =>
+    item.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredReadingList = readingListGallery.filter(book =>
+    book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    book.author.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredReviews = reviews.filter(rev =>
+    rev.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    rev.comment.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Status Badge Token Matcher (Removed TS Types for .jsx compatibility)
   const getStatusBadge = (status) => {
     const formulas = {
       Pending: "bg-amber-500/10 text-amber-400 border-amber-500/20",
@@ -63,7 +87,7 @@ export default function UserReaderDashboard() {
     return `text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 border rounded-md ${formulas[status] || 'bg-white/5 text-white'}`;
   };
 
-  // Review Edit/Mutation Pipeline functions
+  // Mutation Pipeline Handlers
   const startEdit = (id, currentText) => {
     setEditingReviewId(id);
     setEditText(currentText);
@@ -81,17 +105,12 @@ export default function UserReaderDashboard() {
   return (
     <div className="min-h-screen bg-slate-950 text-white flex">
       
-      {/* ========================================================================= */}
-      {/* SIDEBAR BLOCK: Fixed layout architecture matching multi-role platforms     */}
-      {/* ========================================================================= */}
+      {/* SIDEBAR BLOCK */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-white/10 p-6 flex flex-col justify-between transform transition-transform duration-300 lg:translate-x-0 lg:static lg:h-screen ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="space-y-8">
-          {/* Platform Identity Branding */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-black text-white shadow-md shadow-indigo-600/20">
-                L
-              </div>
+              <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-black text-white shadow-md shadow-indigo-600/20">L</div>
               <div>
                 <h2 className="font-black tracking-tight text-sm">NEXUS_CORE</h2>
                 <p className="text-[10px] font-bold tracking-wider text-indigo-400 uppercase">Library Pipeline</p>
@@ -102,20 +121,23 @@ export default function UserReaderDashboard() {
             </button>
           </div>
 
-          {/* User Account Persona Information Card */}
+          {/* User Account Card */}
           <div className="flex items-center gap-3 bg-white/5 border border-white/5 rounded-xl p-3">
             <div className="w-10 h-10 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
               <Person className="w-5 h-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-bold text-xs truncate">{user?.name}</p>
+              {isLoadingSession ? (
+                <div className="h-3 w-20 bg-white/10 animate-pulse rounded" />
+              ) : (
+                <p className="font-bold text-xs truncate">{user?.name || "Anonymous Reader"}</p>
+              )}
               <span className="text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold uppercase px-1.5 py-0.5 rounded-md inline-block mt-0.5">
-                Reader Tier 1
+                Active Client
               </span>
             </div>
           </div>
 
-          {/* Navigational Tab Selectors Matrix */}
           <nav className="space-y-1">
             {[
               { id: 'overview', name: 'Dashboard Terminal', icon: LayoutCells },
@@ -138,24 +160,20 @@ export default function UserReaderDashboard() {
           </nav>
         </div>
 
-        {/* Global Operational Security Footprints */}
         <div className="pt-4 border-t border-white/5 flex items-center gap-2 text-slate-500 text-[10px] font-medium uppercase tracking-wider">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
           <span>Terminal Sec_Verified</span>
         </div>
       </aside>
 
-      {/* Backdrop for structural off-canvas mobile drawer viewports */}
       {sidebarOpen && (
         <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden" />
       )}
 
-      {/* ========================================================================= */}
-      {/* WORKSPACE AREA FRAMEWORK: Flex-1 container handling tabs and stats        */}
-      {/* ========================================================================= */}
+      {/* WORKSPACE AREA FRAMEWORK */}
       <main className="flex-1 w-full min-w-0 p-6 md:p-10 space-y-8 overflow-y-auto max-w-[1600px] mx-auto">
         
-        {/* Header Block with Mobile Menu Trigger toggle bar */}
+        {/* Header Block */}
         <div className="flex items-center justify-between gap-4 border-b border-white/5 pb-6">
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white">
@@ -173,13 +191,13 @@ export default function UserReaderDashboard() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Query structural logs..."
+              placeholder="Query matrix entries..."
               className="w-full pl-11 pr-4 py-1.5 bg-white/5 focus:bg-white/10 border border-white/10 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
             />
           </div>
         </div>
 
-        {/* Analytical Metric Matrix Dashboard Cards Block */}
+        {/* Dynamic Metric Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div className="bg-slate-900/40 border border-white/10 p-5 rounded-2xl flex items-center gap-4 shadow-xl backdrop-blur-xs">
             <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -187,7 +205,7 @@ export default function UserReaderDashboard() {
             </div>
             <div>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Books Read</p>
-              <h3 className="text-xl md:text-2xl font-black tracking-tight mt-0.5">18 Volumes</h3>
+              <h3 className="text-xl md:text-2xl font-black tracking-tight mt-0.5">{booksReadCount} Volumes</h3>
             </div>
           </div>
 
@@ -197,7 +215,7 @@ export default function UserReaderDashboard() {
             </div>
             <div>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Pending Deliveries</p>
-              <h3 className="text-xl md:text-2xl font-black tracking-tight mt-0.5">1 Pipeline</h3>
+              <h3 className="text-xl md:text-2xl font-black tracking-tight mt-0.5">{pendingDeliveriesCount} Pipeline{pendingDeliveriesCount !== 1 ? 's' : ''}</h3>
             </div>
           </div>
 
@@ -207,66 +225,71 @@ export default function UserReaderDashboard() {
             </div>
             <div>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Spent on Fees</p>
-              <h3 className="text-xl md:text-2xl font-black tracking-tight mt-0.5">$14.25</h3>
+              <h3 className="text-xl md:text-2xl font-black tracking-tight mt-0.5">${totalFeesSpent.toFixed(2)}</h3>
             </div>
           </div>
         </div>
 
-        {/* ========================================================================= */}
-        {/* VIEWPORTS TAB PORT: Condition-based panel engine rendering active states */}
-        {/* ========================================================================= */}
-        
         {/* TAB 1: OVERVIEW TERMINAL */}
         {activeTab === 'overview' && (
           <div className="space-y-6 animate-in fade-in duration-300">
             <div className="bg-slate-900/20 border border-white/10 rounded-2xl p-6">
-              <h3 className="text-base font-bold uppercase tracking-wider text-indigo-400 mb-4">Total Volumes Catalogued Graph Mock</h3>
-              <div className="h-44 bg-linear-to-b from-white/5 to-transparent rounded-xl border border-white/5 relative overflow-hidden flex items-end p-4 gap-2">
-                {/* Embedded Analytical Graph nodes leveraging pure CSS structures */}
-                <div className="w-full bg-indigo-500/30 h-[40%] rounded-md hover:bg-indigo-500/50 transition-all" />
-                <div className="w-full bg-indigo-500/30 h-[65%] rounded-md hover:bg-indigo-500/50 transition-all" />
-                <div className="w-full bg-indigo-500/40 h-[50%] rounded-md hover:bg-indigo-500/50 transition-all" />
-                <div className="w-full bg-indigo-500/60 h-[85%] rounded-md hover:bg-indigo-500/50 transition-all" />
-                <div className="w-full bg-indigo-600 h-[70%] rounded-md relative shadow-lg shadow-indigo-600/20">
-                  <div className="absolute top-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              <h3 className="text-base font-bold uppercase tracking-wider text-indigo-400 mb-4">Fee Distribution Analytics</h3>
+              {analyticalGraphData.length === 0 ? (
+                <p className="text-slate-500 text-xs italic py-4">No structural nodes catalogued to display layout graphics.</p>
+              ) : (
+                <div className="h-44 bg-linear-to-b from-white/5 to-transparent rounded-xl border border-white/5 relative overflow-hidden flex items-end p-4 gap-2">
+                  {analyticalGraphData.map((node) => (
+                    <div 
+                      key={node.id} 
+                      style={{ height: `${node.percentage}%` }}
+                      className="w-full bg-indigo-500/30 rounded-md hover:bg-indigo-500/50 transition-all relative group"
+                    >
+                      <div className="absolute top-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-white opacity-0 group-hover:opacity-100 transition-opacity animate-pulse" />
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* TAB 2: DELIVERY REGISTRATION HISTORY TABLE */}
+        {/* TAB 2: DELIVERY HISTORY */}
         {activeTab === 'delivery' && (
           <div className="bg-slate-900/20 border border-white/10 rounded-2xl shadow-xl overflow-hidden animate-in fade-in duration-300">
             <div className="p-5 border-b border-white/5 bg-slate-900/40">
               <h2 className="font-bold text-sm uppercase tracking-wider text-slate-300">Distribution Ledger Logs</h2>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-white/10 text-slate-400 font-semibold bg-white/5">
-                    <th className="p-4">Book Title Identifier</th>
-                    <th className="p-4">Delivery Fee</th>
-                    <th className="p-4">Request Date Stamp</th>
-                    <th className="p-4 text-right">Routing Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {deliveryHistory.map((item) => (
-                    <tr key={item.id} className="hover:bg-white/5 transition-colors group">
-                      <td className="p-4 font-bold text-white group-hover:text-indigo-400 transition-colors">{item.title}</td>
-                      <td className="p-4 font-medium text-slate-300">{item.fee}</td>
-                      <td className="p-4 text-slate-400">{item.date}</td>
-                      <td className="p-4 text-right"><span className={getStatusBadge(item.status)}>{item.status}</span></td>
+            {filteredDeliveryHistory.length === 0 ? (
+              <p className="text-slate-500 text-xs italic p-6 text-center">No delivery parameters matched your request.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/10 text-slate-400 font-semibold bg-white/5">
+                      <th className="p-4">Book Title Identifier</th>
+                      <th className="p-4">Delivery Fee</th>
+                      <th className="p-4">Request Date Stamp</th>
+                      <th className="p-4 text-right">Routing Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {filteredDeliveryHistory.map((item) => (
+                      <tr key={item.id} className="hover:bg-white/5 transition-colors group">
+                        <td className="p-4 font-bold text-white group-hover:text-indigo-400 transition-colors">{item.title}</td>
+                        <td className="p-4 font-medium text-slate-300">${item.fee.toFixed(2)}</td>
+                        <td className="p-4 text-slate-400">{item.date}</td>
+                        <td className="p-4 text-right"><span className={getStatusBadge(item.status)}>{item.status}</span></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
-        {/* TAB 3: READING LIST GALLERY MATRIX */}
+        {/* TAB 3: READING LIST GALLERY */}
         {activeTab === 'gallery' && (
           <div className="space-y-6 animate-in fade-in duration-300">
             <div className="flex items-center justify-between border-b border-white/5 pb-3">
@@ -281,13 +304,15 @@ export default function UserReaderDashboard() {
               </div>
             </div>
 
-            {viewMode === 'grid' ? (
+            {filteredReadingList.length === 0 ? (
+              <p className="text-slate-500 text-xs italic py-4 text-center">No assets found matching the tracking constraints.</p>
+            ) : viewMode === 'grid' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {readingListGallery.map((book) => (
+                {filteredReadingList.map((book) => (
                   <div key={book.id} className="group relative bg-slate-900/40 border border-white/10 hover:border-indigo-500/40 rounded-2xl overflow-hidden shadow-xl transition-all duration-300 flex flex-col h-full">
                     <div className="h-44 w-full relative bg-slate-950 overflow-hidden">
-                      <img src={book.image} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                      <Image src={book.image} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80" width={300} height={176} priority={false} />
+                      <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/20 to-transparent" />
                       <span className="absolute bottom-3 left-4 text-[9px] font-black uppercase tracking-widest bg-indigo-600 border border-indigo-400/30 px-2 py-0.5 rounded-md">
                         {book.category}
                       </span>
@@ -306,7 +331,7 @@ export default function UserReaderDashboard() {
               </div>
             ) : (
               <div className="space-y-2">
-                {readingListGallery.map((book) => (
+                {filteredReadingList.map((book) => (
                   <div key={book.id} className="bg-slate-900/30 border border-white/10 p-3 rounded-xl flex items-center justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <h4 className="font-bold text-sm text-white truncate">{book.title}</h4>
@@ -322,16 +347,16 @@ export default function UserReaderDashboard() {
           </div>
         )}
 
-        {/* TAB 4: MY REVIEWS CRITICAL OPERATIONS INTERFACE */}
+        {/* TAB 4: MY REVIEWS */}
         {activeTab === 'reviews' && (
           <div className="space-y-5 animate-in fade-in duration-300">
             <h2 className="font-bold text-sm uppercase tracking-wider text-slate-300 border-b border-white/5 pb-2">Personal Review Audit Registers</h2>
             
-            {reviews.length === 0 ? (
-              <p className="text-slate-500 text-xs italic py-4">No validation text instances found inside catalog nodes.</p>
+            {filteredReviews.length === 0 ? (
+              <p className="text-slate-500 text-xs italic py-4 text-center">No log strings matching search parameters inside catalog nodes.</p>
             ) : (
               <div className="space-y-4">
-                {reviews.map((rev) => (
+                {filteredReviews.map((rev) => (
                   <div key={rev.id} className="bg-slate-900/40 border border-white/10 rounded-2xl p-5 space-y-3 shadow-xl backdrop-blur-xs relative">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-2.5">
                       <div>
@@ -339,7 +364,6 @@ export default function UserReaderDashboard() {
                         <p className="text-[10px] text-slate-500 mt-0.5">Logs committed on {rev.date}</p>
                       </div>
                       
-                      {/* Operational Crud Command triggers */}
                       <div className="flex items-center gap-1.5 self-end sm:self-auto">
                         {editingReviewId === rev.id ? (
                           <button onClick={() => saveEdit(rev.id)} className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] uppercase rounded-md transition-colors">
@@ -356,7 +380,6 @@ export default function UserReaderDashboard() {
                       </div>
                     </div>
 
-                    {/* Operational Dynamic Editable Text Segment Block */}
                     {editingReviewId === rev.id ? (
                       <textarea
                         value={editText}
