@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Layers } from '@gravity-ui/icons';
 import SearchFilter from './SearchFilter'; 
-import BooksGridClient from '@/Components/BooksGridClient'; // Import the newly minted grid system
+import BooksGridClient from '@/Components/BooksGridClient'; 
 
 export const revalidate = 0;
 

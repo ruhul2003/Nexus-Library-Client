@@ -1,83 +1,68 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  BookOpen, 
-  Bookmark, 
-  LayoutCells,    
-  Person,
-  Pencil,
-  TrashBin,      
-  Bars,          
-  Xmark,          
-  ShieldCheck, 
-  CircleCheck, 
-  Receipt,
-  Trolley,
-  Magnifier
+  BookOpen, Bookmark, LayoutCells, Person, Pencil, TrashBin,      
+  Bars, Xmark, ShieldCheck, CircleCheck, Receipt, Trolley, Magnifier
 } from '@gravity-ui/icons';
 import { authClient } from '@/lib/auth-client';
 import Image from 'next/image';
 
 export default function UserReaderDashboard() {
-  // 1. Session Engine Context
   const sessionQuery = authClient.useSession();
   const user = sessionQuery.data?.user;
   const isLoadingSession = sessionQuery.isPending;
 
-  // 2. Navigation & UI Layout States
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview'); 
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState('grid');
 
-  // 3. Mutation Pipelines & Dynamic Memory Stores
+  const [deliveryHistory, setDeliveryHistory] = useState([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
+  // My Reviews Local State Architecture
   const [reviews, setReviews] = useState([
-    { id: 1, title: "The Clean Architecture Guide", date: "2026-05-10", comment: "Absolutely essential reading for structuring decoupled Next.js systems." },
-    { id: 2, title: "Refactoring UI", date: "2026-04-18", comment: "Practical visual advice. Completely reshaped how I think about dark-mode layout spacing." }
+    { id: 1, title: "The Clean Architecture Guide", date: "2026-05-10", comment: "Absolutely essential reading for structuring decoupled Next.js systems." }
   ]);
   const [editingReviewId, setEditingReviewId] = useState(null);
   const [editText, setEditText] = useState('');
 
-  const [deliveryHistory, setDeliveryHistory] = useState([
-    { id: 401, title: "Designing Data-Intensive Applications", fee: 2.50, date: "2026-06-15", status: "Delivered" },
-    { id: 402, title: "Compilers: Principles, Techniques, and Tools", fee: 4.00, date: "2026-06-19", status: "Dispatched" },
-    { id: 403, title: "Microservices Architecture Patterns", fee: 1.75, date: "2026-06-20", status: "Pending" }
-  ]);
+  // 1. Fetch user records using native fetch
+  useEffect(() => {
+    if (user?.email) {
+      setIsLoadingData(true);
+      
+      fetch(`http://localhost:5000/api/orders/my-orders/${user.email}`)
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`HTTP network error: Status ${res.status}`);
+          }
+          return res.json();
+        })
+        .then((data) => setDeliveryHistory(data))
+        .catch((err) => console.error("Database connection fault tracking orders:", err))
+        .finally(() => setIsLoadingData(false));
+    }
+  }, [user?.email]);
 
-  const [readingListGallery, setReadingListGallery] = useState([
-    { id: 501, title: "Design Systems in Production", author: "Alla Kholmatova", image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300", category: "Design" },
-    { id: 502, title: "Don't Make Me Think", author: "Steve Krug", image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=300", category: "UX Research" },
-    { id: 503, title: "The Clean Architecture Guide", author: "Robert C. Martin", image: "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=300", category: "Tech" }
-  ]);
-
-  // 4. Dynamic Analytics Metrics Engine (Derived State Calculations)
-  const booksReadCount = readingListGallery.length;
+  // 2. Computed Analytics Engine Metrics
+  const booksReadCount = deliveryHistory.filter(item => item.status === 'Delivered').length;
   const pendingDeliveriesCount = deliveryHistory.filter(item => item.status !== 'Delivered').length;
-  const totalFeesSpent = deliveryHistory.reduce((acc, item) => acc + item.fee, 0);
+  const totalFeesSpent = deliveryHistory.reduce((acc, item) => acc + (item.fee || 0), 0);
 
-  // Generate dynamic data mapping segments based on current structural states
+  // Derived Reading List (Only item packages successfully delivered)
+  const readingList = deliveryHistory.filter(item => item.status === 'Delivered');
+
   const analyticalGraphData = deliveryHistory.map((item) => ({
-    id: item.id,
-    percentage: Math.min(100, Math.max(20, (item.fee / 5) * 100))
+    id: item._id,
+    percentage: Math.min(100, Math.max(20, ((item.fee || 0) / 5) * 100))
   }));
 
-  // Filtering Logic matching structural query parameters
   const filteredDeliveryHistory = deliveryHistory.filter(item =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase())
+    item.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    item.userEmail?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredReadingList = readingListGallery.filter(book =>
-    book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    book.author.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const filteredReviews = reviews.filter(rev =>
-    rev.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    rev.comment.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Status Badge Token Matcher (Removed TS Types for .jsx compatibility)
   const getStatusBadge = (status) => {
     const formulas = {
       Pending: "bg-amber-500/10 text-amber-400 border-amber-500/20",
@@ -87,25 +72,26 @@ export default function UserReaderDashboard() {
     return `text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 border rounded-md ${formulas[status] || 'bg-white/5 text-white'}`;
   };
 
-  // Mutation Pipeline Handlers
-  const startEdit = (id, currentText) => {
-    setEditingReviewId(id);
-    setEditText(currentText);
+  // Review Pipeline Handlers
+  const handleStartEdit = (review) => {
+    setEditingReviewId(review.id);
+    setEditText(review.comment);
   };
 
-  const saveEdit = (id) => {
+  const handleSaveEdit = (id) => {
     setReviews(reviews.map(r => r.id === id ? { ...r, comment: editText } : r));
     setEditingReviewId(null);
+    setEditText('');
   };
 
-  const deleteReview = (id) => {
+  const handleDeleteReview = (id) => {
     setReviews(reviews.filter(r => r.id !== id));
   };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex">
       
-      {/* SIDEBAR BLOCK */}
+      {/* Responsive Sidebar Layout Container */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-white/10 p-6 flex flex-col justify-between transform transition-transform duration-300 lg:translate-x-0 lg:static lg:h-screen ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="space-y-8">
           <div className="flex items-center justify-between">
@@ -121,7 +107,6 @@ export default function UserReaderDashboard() {
             </button>
           </div>
 
-          {/* User Account Card */}
           <div className="flex items-center gap-3 bg-white/5 border border-white/5 rounded-xl p-3">
             <div className="w-10 h-10 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0">
               <Person className="w-5 h-5" />
@@ -138,12 +123,13 @@ export default function UserReaderDashboard() {
             </div>
           </div>
 
+          {/* Extended Route Navigation Channels */}
           <nav className="space-y-1">
             {[
               { id: 'overview', name: 'Dashboard Terminal', icon: LayoutCells },
               { id: 'delivery', name: 'Delivery History', icon: Receipt },
-              { id: 'gallery', name: 'My Reading List', icon: BookOpen },
-              { id: 'reviews', name: 'My Review Logs', icon: Bookmark },
+              { id: 'reading-list', name: 'My Reading List', icon: BookOpen },
+              { id: 'reviews', name: 'My Reviews Ledger', icon: Bookmark },
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -159,45 +145,39 @@ export default function UserReaderDashboard() {
             })}
           </nav>
         </div>
-
-        <div className="pt-4 border-t border-white/5 flex items-center gap-2 text-slate-500 text-[10px] font-medium uppercase tracking-wider">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-          <span>Terminal Sec_Verified</span>
-        </div>
       </aside>
 
-      {sidebarOpen && (
-        <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden" />
-      )}
-
-      {/* WORKSPACE AREA FRAMEWORK */}
+      {/* Main Content Dashboard Frame */}
       <main className="flex-1 w-full min-w-0 p-6 md:p-10 space-y-8 overflow-y-auto max-w-[1600px] mx-auto">
         
-        {/* Header Block */}
+        {/* Mobile Header Toolbar Integration */}
         <div className="flex items-center justify-between gap-4 border-b border-white/5 pb-6">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 bg-slate-900 border border-white/10 rounded-xl text-slate-400 hover:text-white">
               <Bars className="w-5 h-5" />
             </button>
             <div>
               <h1 className="text-xl md:text-3xl font-black tracking-tight uppercase">Reader Workspace</h1>
-              <p className="text-slate-400 text-xs md:text-sm mt-0.5">Manage digital checkout pipelines, routing states, and data ledgers.</p>
+              
             </div>
           </div>
 
-          <div className="relative hidden md:block w-72">
-            <Magnifier className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Query matrix entries..."
-              className="w-full pl-11 pr-4 py-1.5 bg-white/5 focus:bg-white/10 border border-white/10 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
-            />
-          </div>
+          {/* Dynamic Data Filter Input Field */}
+          {['delivery', 'reading-list'].includes(activeTab) && (
+            <div className="relative max-w-xs w-full hidden sm:block">
+              <Magnifier className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input 
+                type="text" 
+                placeholder="Search catalog titles..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-900 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-xs focus:outline-hidden focus:border-indigo-500 text-white placeholder-slate-500 transition-colors"
+              />
+            </div>
+          )}
         </div>
 
-        {/* Dynamic Metric Grid */}
+        {/* Dynamic Aggregated Metrics Section */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div className="bg-slate-900/40 border border-white/10 p-5 rounded-2xl flex items-center gap-4 shadow-xl backdrop-blur-xs">
             <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -205,7 +185,7 @@ export default function UserReaderDashboard() {
             </div>
             <div>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Books Read</p>
-              <h3 className="text-xl md:text-2xl font-black tracking-tight mt-0.5">{booksReadCount} Volumes</h3>
+              <h3 className="text-xl md:text-2xl font-black tracking-tight mt-0.5">{isLoadingData ? "..." : `${booksReadCount} Volumes`}</h3>
             </div>
           </div>
 
@@ -215,7 +195,7 @@ export default function UserReaderDashboard() {
             </div>
             <div>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Pending Deliveries</p>
-              <h3 className="text-xl md:text-2xl font-black tracking-tight mt-0.5">{pendingDeliveriesCount} Pipeline{pendingDeliveriesCount !== 1 ? 's' : ''}</h3>
+              <h3 className="text-xl md:text-2xl font-black tracking-tight mt-0.5">{isLoadingData ? "..." : `${pendingDeliveriesCount} Pipelines`}</h3>
             </div>
           </div>
 
@@ -230,23 +210,17 @@ export default function UserReaderDashboard() {
           </div>
         </div>
 
-        {/* TAB 1: OVERVIEW TERMINAL */}
+        {/* TAB FEATURE 1: Overview Analytical Chart Panel */}
         {activeTab === 'overview' && (
-          <div className="space-y-6 animate-in fade-in duration-300">
+          <div className="space-y-6">
             <div className="bg-slate-900/20 border border-white/10 rounded-2xl p-6">
               <h3 className="text-base font-bold uppercase tracking-wider text-indigo-400 mb-4">Fee Distribution Analytics</h3>
               {analyticalGraphData.length === 0 ? (
-                <p className="text-slate-500 text-xs italic py-4">No structural nodes catalogued to display layout graphics.</p>
+                <p className="text-slate-500 text-xs italic py-4">No structural nodes catalogued to display metrics.</p>
               ) : (
-                <div className="h-44 bg-linear-to-b from-white/5 to-transparent rounded-xl border border-white/5 relative overflow-hidden flex items-end p-4 gap-2">
+                <div className="h-44 bg-linear-to-b from-white/5 to-transparent rounded-xl border border-white/5 relative flex items-end p-4 gap-2">
                   {analyticalGraphData.map((node) => (
-                    <div 
-                      key={node.id} 
-                      style={{ height: `${node.percentage}%` }}
-                      className="w-full bg-indigo-500/30 rounded-md hover:bg-indigo-500/50 transition-all relative group"
-                    >
-                      <div className="absolute top-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-white opacity-0 group-hover:opacity-100 transition-opacity animate-pulse" />
-                    </div>
+                    <div key={node.id} style={{ height: `${node.percentage}%` }} className="w-full bg-indigo-500/30 rounded-md hover:bg-indigo-500/50 transition-all" />
                   ))}
                 </div>
               )}
@@ -254,31 +228,31 @@ export default function UserReaderDashboard() {
           </div>
         )}
 
-        {/* TAB 2: DELIVERY HISTORY */}
+        {/* TAB FEATURE 2: Distribution Ledger Logs Table */}
         {activeTab === 'delivery' && (
-          <div className="bg-slate-900/20 border border-white/10 rounded-2xl shadow-xl overflow-hidden animate-in fade-in duration-300">
+          <div className="bg-slate-900/20 border border-white/10 rounded-2xl shadow-xl overflow-hidden">
             <div className="p-5 border-b border-white/5 bg-slate-900/40">
               <h2 className="font-bold text-sm uppercase tracking-wider text-slate-300">Distribution Ledger Logs</h2>
             </div>
             {filteredDeliveryHistory.length === 0 ? (
-              <p className="text-slate-500 text-xs italic p-6 text-center">No delivery parameters matched your request.</p>
+              <p className="text-slate-500 text-xs italic p-6 text-center">No transactions registered.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-white/10 text-slate-400 font-semibold bg-white/5">
-                      <th className="p-4">Book Title Identifier</th>
+                      <th className="p-4">Book Title Target</th>
                       <th className="p-4">Delivery Fee</th>
-                      <th className="p-4">Request Date Stamp</th>
+                      <th className="p-4">Date Stamp</th>
                       <th className="p-4 text-right">Routing Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
                     {filteredDeliveryHistory.map((item) => (
-                      <tr key={item.id} className="hover:bg-white/5 transition-colors group">
-                        <td className="p-4 font-bold text-white group-hover:text-indigo-400 transition-colors">{item.title}</td>
-                        <td className="p-4 font-medium text-slate-300">${item.fee.toFixed(2)}</td>
-                        <td className="p-4 text-slate-400">{item.date}</td>
+                      <tr key={item._id} className="hover:bg-white/5 transition-colors">
+                        <td className="p-4 font-bold text-white">{item.title || "Standard Catalog Volume"}</td>
+                        <td className="p-4 font-medium text-slate-300">${item.fee?.toFixed(2)}</td>
+                        <td className="p-4 text-slate-400">{item.date || "2026-06-21"}</td>
                         <td className="p-4 text-right"><span className={getStatusBadge(item.status)}>{item.status}</span></td>
                       </tr>
                     ))}
@@ -289,57 +263,36 @@ export default function UserReaderDashboard() {
           </div>
         )}
 
-        {/* TAB 3: READING LIST GALLERY */}
-        {activeTab === 'gallery' && (
-          <div className="space-y-6 animate-in fade-in duration-300">
-            <div className="flex items-center justify-between border-b border-white/5 pb-3">
-              <h2 className="font-bold text-sm uppercase tracking-wider text-slate-300">Fulfilled Asset Gallery</h2>
-              <div className="flex bg-white/5 border border-white/10 rounded-lg p-0.5">
-                <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}>
-                  <LayoutCells className="w-3.5 h-3.5" />
-                </button>
-                <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}>
-                  <LayoutCells className="w-3.5 h-3.5" />
-                </button>
-              </div>
+        {/* TAB FEATURE 3: My Reading List Gallery Matrix View */}
+        {activeTab === 'reading-list' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-bold text-sm uppercase tracking-wider text-slate-300">My Settled Reading List</h2>
             </div>
-
-            {filteredReadingList.length === 0 ? (
-              <p className="text-slate-500 text-xs italic py-4 text-center">No assets found matching the tracking constraints.</p>
-            ) : viewMode === 'grid' ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {filteredReadingList.map((book) => (
-                  <div key={book.id} className="group relative bg-slate-900/40 border border-white/10 hover:border-indigo-500/40 rounded-2xl overflow-hidden shadow-xl transition-all duration-300 flex flex-col h-full">
-                    <div className="h-44 w-full relative bg-slate-950 overflow-hidden">
-                      <Image src={book.image} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80" width={300} height={176} priority={false} />
-                      <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                      <span className="absolute bottom-3 left-4 text-[9px] font-black uppercase tracking-widest bg-indigo-600 border border-indigo-400/30 px-2 py-0.5 rounded-md">
-                        {book.category}
-                      </span>
-                    </div>
-                    <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
-                      <div>
-                        <h4 className="font-bold text-white text-base leading-tight group-hover:text-indigo-400 transition-colors">{book.title}</h4>
-                        <p className="text-slate-400 text-xs mt-1">{book.author}</p>
-                      </div>
-                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-md inline-flex items-center gap-1.5 w-max">
-                        <span className="w-1 h-1 rounded-full bg-emerald-400" /> Settled / Returned
-                      </span>
-                    </div>
-                  </div>
-                ))}
+            {isLoadingData ? (
+              <p className="text-slate-500 text-xs animate-pulse">Syncing catalog cards...</p>
+            ) : readingList.length === 0 ? (
+              <div className="bg-slate-900/20 border border-dashed border-white/10 p-10 rounded-2xl text-center">
+                <p className="text-slate-500 text-xs italic">No books successfully cleared routing gates to your active reading list yet.</p>
               </div>
             ) : (
-              <div className="space-y-2">
-                {filteredReadingList.map((book) => (
-                  <div key={book.id} className="bg-slate-900/30 border border-white/10 p-3 rounded-xl flex items-center justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-bold text-sm text-white truncate">{book.title}</h4>
-                      <p className="text-xs text-slate-400 truncate">{book.author}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                {readingList.map((book) => (
+                  <div key={book._id} className="bg-slate-900 border border-white/10 rounded-2xl overflow-hidden shadow-lg flex flex-col justify-between group hover:border-indigo-500/50 transition-all">
+                    <div className="p-5 space-y-4">
+                      <div className="w-full aspect-[4/5] relative bg-slate-950 rounded-xl border border-white/5 flex items-center justify-center text-slate-700">
+                        <BookOpen className="w-12 h-12 text-slate-800 group-hover:scale-110 transition-transform duration-300" />
+                        <span className="absolute bottom-3 right-3 bg-emerald-500/20 text-emerald-400 text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded border border-emerald-500/30">Cleared</span>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-sm text-white line-clamp-1">{book.title || "Decoupled Architecture Volume"}</h4>
+                        <p className="text-[10px] text-slate-500 mt-0.5">Asset Reference: #{book._id.slice(-6).toUpperCase()}</p>
+                      </div>
                     </div>
-                    <span className="text-[10px] font-semibold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-md shrink-0">
-                      {book.category}
-                    </span>
+                    <div className="p-4 bg-white/2 border-t border-white/5 flex items-center justify-between text-[10px] text-slate-400">
+                      <span>Fee: ${(book.fee || 0).toFixed(2)}</span>
+                      <span className="text-emerald-400 font-bold uppercase tracking-wider">Returned/Settled</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -347,50 +300,49 @@ export default function UserReaderDashboard() {
           </div>
         )}
 
-        {/* TAB 4: MY REVIEWS */}
+        {/* TAB FEATURE 4: My Reviews Editorial Manager Ledger */}
         {activeTab === 'reviews' && (
-          <div className="space-y-5 animate-in fade-in duration-300">
-            <h2 className="font-bold text-sm uppercase tracking-wider text-slate-300 border-b border-white/5 pb-2">Personal Review Audit Registers</h2>
-            
-            {filteredReviews.length === 0 ? (
-              <p className="text-slate-500 text-xs italic py-4 text-center">No log strings matching search parameters inside catalog nodes.</p>
+          <div className="space-y-6">
+            <h2 className="font-bold text-sm uppercase tracking-wider text-slate-300">My Book Critic Reviews</h2>
+            {reviews.length === 0 ? (
+              <p className="text-slate-500 text-xs italic py-4">No reviews logged into the system databanks.</p>
             ) : (
               <div className="space-y-4">
-                {filteredReviews.map((rev) => (
-                  <div key={rev.id} className="bg-slate-900/40 border border-white/10 rounded-2xl p-5 space-y-3 shadow-xl backdrop-blur-xs relative">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/5 pb-2.5">
-                      <div>
-                        <h4 className="font-bold text-white text-sm">{rev.title}</h4>
-                        <p className="text-[10px] text-slate-500 mt-0.5">Logs committed on {rev.date}</p>
+                {reviews.map((review) => (
+                  <div key={review.id} className="bg-slate-900 border border-white/10 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4 shadow-md">
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-center gap-3">
+                        <h4 className="font-bold text-xs md:text-sm text-white">{review.title}</h4>
+                        <span className="text-[10px] text-slate-500 font-mono">{review.date}</span>
                       </div>
                       
-                      <div className="flex items-center gap-1.5 self-end sm:self-auto">
-                        {editingReviewId === rev.id ? (
-                          <button onClick={() => saveEdit(rev.id)} className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] uppercase rounded-md transition-colors">
-                            Commit Save
-                          </button>
-                        ) : (
-                          <button onClick={() => startEdit(rev.id, rev.comment)} className="p-1.5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white rounded-md border border-white/5 transition-colors" title="Edit Log">
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                        <button onClick={() => deleteReview(rev.id)} className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-md border border-rose-500/20 transition-colors" title="Purge Record">
+                      {editingReviewId === review.id ? (
+                        <div className="space-y-2 pt-1">
+                          <textarea 
+                            value={editText}
+                            onChange={(e) => setEditText(e.target.value)}
+                            className="w-full bg-slate-950 border border-indigo-500/30 rounded-xl p-3 text-xs text-white focus:outline-hidden focus:border-indigo-500 font-sans"
+                            rows={3}
+                          />
+                          <div className="flex gap-2">
+                            <button onClick={() => handleSaveEdit(review.id)} className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 font-bold text-[10px] rounded-md uppercase tracking-wider transition-colors">Save updates</button>
+                            <button onClick={() => setEditingReviewId(null)} className="px-3 py-1 bg-white/5 hover:bg-white/10 font-bold text-[10px] rounded-md uppercase tracking-wider transition-colors">Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-400 leading-relaxed font-sans">{review.comment}</p>
+                      )}
+                    </div>
+
+                    {editingReviewId !== review.id && (
+                      <div className="flex items-center gap-1.5 self-end sm:self-start shrink-0">
+                        <button onClick={() => handleStartEdit(review)} className="p-2 bg-white/5 hover:bg-indigo-600/20 border border-white/5 hover:border-indigo-500/30 text-slate-400 hover:text-indigo-400 rounded-xl transition-all">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => handleDeleteReview(review.id)} className="p-2 bg-white/5 hover:bg-rose-600/20 border border-white/5 hover:border-rose-500/30 text-slate-400 hover:text-rose-400 rounded-xl transition-all">
                           <TrashBin className="w-3.5 h-3.5" />
                         </button>
                       </div>
-                    </div>
-
-                    {editingReviewId === rev.id ? (
-                      <textarea
-                        value={editText}
-                        onChange={(e) => setEditText(e.target.value)}
-                        className="w-full p-3 bg-slate-950 border border-indigo-500 rounded-xl text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-sans"
-                        rows={3}
-                      />
-                    ) : (
-                      <p className="text-xs text-slate-300 leading-relaxed font-normal bg-white/2 p-3 rounded-xl border border-white/5">
-                        `{rev.comment}`
-                      </p>
                     )}
                   </div>
                 ))}
@@ -398,7 +350,6 @@ export default function UserReaderDashboard() {
             )}
           </div>
         )}
-
       </main>
     </div>
   );

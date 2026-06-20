@@ -174,15 +174,15 @@ export default function BooksGridClient({ filteredBooks }) {
     >
       <AnimatePresence mode="popLayout">
         {filteredBooks.map((book, index) => {
-          const isHovered = hoveredId === (book.id || book._id);
-          const isBookmarked = bookmarkedIds.has(book.id || book._id);
+          const isHovered = hoveredId === book._id;
+          const isBookmarked = bookmarkedIds.has(book._id);
 
           return (
             <motion.div 
               layout
-              key={book.id || book._id}
+              key={book._id}
               variants={cardVariants}
-              onHoverStart={() => setHoveredId(book.id || book._id)}
+              onHoverStart={() => setHoveredId(book._id)}
               onHoverEnd={() => setHoveredId(null)}
               whileHover={{ 
                 y: -10,
@@ -209,14 +209,14 @@ export default function BooksGridClient({ filteredBooks }) {
                     className="absolute inset-0 z-20 bg-linear-to-r from-transparent via-white/20 to-transparent pointer-events-none"
                   />
 
-                  {/* Image with parallax */}
+                  {/* Image with parallax - FIXED: Added relative layout styling */}
                   <motion.div
                     variants={imageVariants}
                     initial="hidden"
                     animate="visible"
                     whileHover={{ scale: 1.08 }}
                     transition={{ duration: 0.5, ease: "easeOut" }}
-                    className="w-full h-full"
+                    className="relative w-full h-full"
                   >
                     <Image
                       src={book.coverImage}
@@ -327,8 +327,8 @@ export default function BooksGridClient({ filteredBooks }) {
                   whileTap={{ scale: 0.96 }}
                 >
                   <Link 
-                    href={`/books/${book.id || book._id}`}
-                    className="flex-1 block bg-linear-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-center text-white font-bold text-xs py-2.5 px-3 rounded-xl transition duration-200 active:scale-98 shadow-lg hover:shadow-indigo-500/50"
+                    href={`/books/${book._id}`}
+                    className="flex-1 block bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-center text-white font-bold text-xs py-2.5 px-3 rounded-xl transition duration-200 active:scale-98 shadow-lg hover:shadow-indigo-500/50"
                   >
                     View Details
                   </Link>
@@ -336,7 +336,7 @@ export default function BooksGridClient({ filteredBooks }) {
 
                 {/* Enhanced Bookmark Button */}
                 <motion.button 
-                  onClick={() => toggleBookmark(book.id || book._id)}
+                  onClick={() => toggleBookmark(book._id)}
                   variants={bookmarkVariants}
                   initial="rest"
                   animate={isBookmarked ? "clicked" : isHovered ? "hover" : "rest"}

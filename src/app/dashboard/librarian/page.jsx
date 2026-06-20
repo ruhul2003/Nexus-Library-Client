@@ -1,103 +1,152 @@
 'use client';
 
-import { useState } from 'react';
-import {Image} from 'next/image';
+import React, { useState, useEffect } from 'react';
 import { 
-  BookOpen, 
-  Bookmark, 
-  Clock, 
-  Magnifier, 
-  ArrowRight, 
-  LayoutCells,     
-  LayoutList, 
-  ArrowUpRight,  
-  Person,
-  Pencil,
-  TrashBin,       
-  Bars,           
-  Xmark,          
-  ShieldCheck, 
-  CircleCheck, 
-  ShoppingBag,    
-  Receipt,
-  Plus,
-  ArrowDownLeft,
-  CircleExclamation
+  LayoutCells, CircleCheck, Trolley, Receipt, ShieldCheck, 
+  BookOpen, Plus, CirclePlus, TrashBin, Pencil, Bars, Xmark,Picture
 } from '@gravity-ui/icons';
-import { authClient } from '@/lib/auth-client';
-
-export default function LibrarianAdminDashboard() {
-  const user = authClient.useSession().data?.user;
-
+import Image from 'next/image';
+export default function LibrarianDashboard() {
+  const [activeTab, setActiveTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('catalog'); // catalog | inventory_requests | telemetry
-  const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState('grid');
+  const [allOrders, setAllOrders] = useState([]);
+  const [inventory, setInventory] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Core administrative states
-  const [catalog, setCatalog] = useState([
-    { id: 9, title: "The Lean Startup", author: "Eric Ries", category: "Business", availableCopies: 0, totalCopies: 3, price: "$4.99", coverImage: "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=300" },
-    { id: 10, title: "Designing Data-Intensive Applications", author: "Martin Kleppmann", category: "Tech", availableCopies: 5, totalCopies: 8, price: "$8.50", coverImage: "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=300" },
-    { id: 11, title: "Compilers: Principles, Techniques, and Tools", author: "Alfred Aho", category: "Tech", availableCopies: 2, totalCopies: 2, price: "$12.00", coverImage: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300" }
-  ]);
+  // Add Book Form State Matrix
+  const [formData, setFormData] = useState({
+    title: '', author: '', description: '', fee: '', category: ''
+  });
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isSubmittingBook, setIsSubmittingBook] = useState(false);
 
-  const [distributionRequests, setDistributionRequests] = useState([
-    { id: 1001, title: "The Lean Startup", requester: "Reader #408", date: "2026-06-20", type: "Checkout Request", status: "Awaiting Action" },
-    { id: 1002, title: "Designing Data-Intensive Applications", requester: "Reader #112", date: "2026-06-19", type: "Return Processing", status: "In Inspection" }
-  ]);
+  // 1. Core Fetch Systems
+  const fetchLibrarianLogs = () => {
+    setIsLoading(true);
+    // Fetch order delivery pipelines
+    fetch('http://localhost:5000/api/librarian/orders')
+      .then((res) => res.ok ? res.json() : Promise.reject(res))
+      .then((data) => setAllOrders(data))
+      .catch((err) => console.error("Could not fetch log lines:", err));
 
-  const telemetryLogs = [
-    { id: "LOG-992", event: "Database Cluster Synchronized", component: "PostgreSQL Replica", timestamp: "13:28:44", status: "Success" },
-    { id: "LOG-993", event: "Checkout Failure - Zero Available Volume", component: "Pipeline Core", timestamp: "13:30:12", status: "Warning" },
-    { id: "LOG-994", event: "Auth Token Rotation Handshake completed", component: "NextAuth Engine", timestamp: "13:31:57", status: "Success" }
-  ];
-
-  // Pipeline execution methods
-  const updateAvailableStock = (id, delta) => {
-    setCatalog(catalog.map(book => {
-      if (book.id === id) {
-        const nextStock = Math.max(0, Math.min(book.totalCopies, book.availableCopies + delta));
-        return { ...book, availableCopies: nextStock };
-      }
-      return book;
-    }));
+    // Fetch librarian personal inventory matrix
+    fetch('http://localhost:5000/api/librarian/books')
+      .then((res) => res.ok ? res.json() : Promise.reject(res))
+      .then((data) => setInventory(data))
+      .catch((err) => console.error("Could not fetch inventory:", err))
+      .finally(() => setIsLoading(false));
   };
 
-  const processRequest = (requestId, disposition) => {
-    setDistributionRequests(distributionRequests.map(req => 
-      req.id === requestId ? { ...req, status: disposition } : req
-    ));
+  useEffect(() => {
+    fetchLibrarianLogs();
+  }, []);
+
+  // 2. Mutate Order Deliveries State Pipeline
+  const mutateOrderStatus = async (id, targetStatus) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/orders/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: targetStatus }),
+      });
+      if (!res.ok) throw new Error(`Mutation failed: ${res.status}`);
+      fetchLibrarianLogs();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const getStatusBadge = (status) => {
-    const schemas = {
-      "Awaiting Action": "bg-amber-500/10 text-amber-400 border-amber-500/20",
-      "In Inspection": "bg-blue-500/10 text-blue-400 border-blue-500/20",
-      "Approved": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-      "Rejected": "bg-rose-500/10 text-rose-400 border-rose-500/20",
-      "Success": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-      "Warning": "bg-amber-500/10 text-amber-400 border-amber-500/20"
-    };
-    return `text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 border rounded-md ${schemas[status] || 'bg-white/5 text-white'}`;
+  // 3. Toggle Inventory Visibility (Published / Unpublished)
+  const toggleBookStatus = async (bookId, currentStatus) => {
+    if (currentStatus === 'Pending Approval') return; // Enforced constraint protection
+    const nextStatus = currentStatus === 'Published' ? 'Unpublished' : 'Published';
+    
+    try {
+      const res = await fetch(`http://localhost:5000/api/books/${bookId}/visibility`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (!res.ok) throw new Error("Visibility mutation error");
+      fetchLibrarianLogs();
+    } catch (err) {
+      console.error(err);
+    }
   };
+
+  // 4. Handle Book Form Submission with external imgBB API upload
+  const handleAddBookSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedFile) return alert("Please select a book cover thumbnail asset file.");
+    
+    setIsSubmittingBook(true);
+    try {
+      // Step A: Upload file asset binary to imgBB API engine
+      const imgFormData = new FormData();
+      imgFormData.append('image', selectedFile);
+      
+      // Using a sample fallback developer key if env configuration is absent
+      const IMGBB_API_KEY = process.env.NEXT_PUBLIC_IMGBB_API_KEY || 'e7136009a2b53733c373a00b0ad8cdba';
+      const imgBBRes = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+        method: 'POST',
+        body: imgFormData
+      });
+      const imgBBData = await imgBBRes.json();
+      if (!imgBBData.success) throw new Error("Asset hosting pipeline verification failure");
+
+      const uploadedImageUrl = imgBBData.data.url;
+
+      // Step B: Post metadata back into database system control parameters
+      const bookPayload = {
+        ...formData,
+        fee: parseFloat(formData.fee) || 0,
+        imageUrl: uploadedImageUrl,
+        status: 'Pending Approval' // System restriction requirement configuration rule
+      };
+
+      const res = await fetch('http://localhost:5000/api/books', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bookPayload)
+      });
+
+      if (!res.ok) throw new Error("Database reject ledger ingestion execution packet fault");
+      
+      alert("Book logged into approval queue pipeline!");
+      setFormData({ title: '', author: '', description: '', fee: '', category: '' });
+      setSelectedFile(null);
+      fetchLibrarianLogs();
+      setActiveTab('inventory');
+    } catch (err) {
+      console.error(err);
+      alert("Add book system channel encountered an operational error.");
+    } finally {
+      setIsSubmittingBook(false);
+    }
+  };
+
+  // Derived Aggregate Calculation Dash metrics
+  const totalBooksListed = inventory.length;
+  const totalEarnings = allOrders.reduce((acc, item) => acc + (item.fee || 0), 0);
+  const activePendingRequests = allOrders.filter(o => o.status === 'Pending').length;
+
+  const analyticalChartBars = allOrders.map((item) => ({
+    id: item._id,
+    height: Math.min(100, Math.max(15, ((item.fee || 0) / 10) * 100))
+  }));
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex">
       
-      {/* ========================================================================= */}
-      {/* SIDEBAR BLOCK: Librarian Admin Framework                                 */}
-      {/* ========================================================================= */}
+      {/* Sidebar Control Interface */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-white/10 p-6 flex flex-col justify-between transform transition-transform duration-300 lg:translate-x-0 lg:static lg:h-screen ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="space-y-8">
-          {/* Identity Branding */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center font-black text-white shadow-md shadow-violet-600/20">
-                Ω
-              </div>
+              <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center font-black text-black shadow-md">L</div>
               <div>
-                <h2 className="font-black tracking-tight text-sm">NEXUS_CORE</h2>
-                <p className="text-[10px] font-bold tracking-wider text-violet-400 uppercase">Admin Terminal</p>
+                <h2 className="font-black tracking-tight text-sm">LIBRARIAN_CORE</h2>
+                <p className="text-[10px] font-bold tracking-wider text-amber-500 uppercase">System Panel</p>
               </div>
             </div>
             <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1 text-slate-400 hover:text-white">
@@ -105,32 +154,19 @@ export default function LibrarianAdminDashboard() {
             </button>
           </div>
 
-          {/* User Profile Card */}
-          <div className="flex items-center gap-3 bg-white/5 border border-white/5 rounded-xl p-3">
-            <div className="w-10 h-10 rounded-lg bg-violet-500/20 border border-violet-500/30 flex items-center justify-center text-violet-400 shrink-0">
-              <Person className="w-5 h-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="font-bold text-xs truncate">{user?.name || "System Admin"}</p>
-              <span className="text-[10px] bg-violet-500/10 text-violet-400 border border-violet-500/20 font-semibold uppercase px-1.5 py-0.5 rounded-md inline-block mt-0.5">
-                Staff / Librarian
-              </span>
-            </div>
-          </div>
-
-          {/* Navigational Tabs Selector */}
           <nav className="space-y-1">
             {[
-              { id: 'catalog', name: 'Master Catalog Ledger', icon: BookOpen },
-              { id: 'inventory_requests', name: 'Distribution Pipeline', icon: ShoppingBag },
-              { id: 'telemetry', name: 'Core System Telemetry', icon: Clock },
+              { id: 'overview', name: 'Overview Terminal', icon: LayoutCells },
+              { id: 'add-book', name: 'Add Book Ingest', icon: CirclePlus },
+              { id: 'inventory', name: 'Manage Inventory', icon: BookOpen },
+              { id: 'deliveries', name: 'Manage Deliveries', icon: Trolley },
             ].map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => { setActiveTab(tab.id); setSidebarOpen(false); }}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold rounded-xl transition-all ${activeTab === tab.id ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/15' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold rounded-xl transition-all ${activeTab === tab.id ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/10' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
                 >
                   <Icon className="w-4 h-4" />
                   {tab.name}
@@ -139,234 +175,230 @@ export default function LibrarianAdminDashboard() {
             })}
           </nav>
         </div>
-
-        {/* Global Security Metrics Footprint */}
-        <div className="pt-4 border-t border-white/5 flex items-center gap-2 text-slate-500 text-[10px] font-medium uppercase tracking-wider">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-          <span>Root Access Verified</span>
-        </div>
       </aside>
 
-      {/* Mobile Drawer viewport Overlay */}
-      {sidebarOpen && (
-        <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden" />
-      )}
-
-      {/* ========================================================================= */}
-      {/* WORKSPACE AREA FRAMEWORK                                                 */}
-      {/* ========================================================================= */}
+      {/* Main Workspace Frame */}
       <main className="flex-1 w-full min-w-0 p-6 md:p-10 space-y-8 overflow-y-auto max-w-[1600px] mx-auto">
         
-        {/* Workspace Top Header Bar */}
-        <div className="flex items-center justify-between gap-4 border-b border-white/5 pb-6">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-white">
-              <Bars className="w-5 h-5" />
-            </button>
-            <div>
-              <h1 className="text-xl md:text-3xl font-black tracking-tight uppercase">Librarian Operations</h1>
-              <p className="text-slate-400 text-xs md:text-sm mt-0.5">Control storage clusters, authorize logistics routing, and evaluate data footprints.</p>
-            </div>
-          </div>
-
-          <div className="relative hidden md:block w-72">
-            <Magnifier className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Query master registers..."
-              className="w-full pl-11 pr-4 py-1.5 bg-white/5 focus:bg-white/10 border border-white/10 rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500 transition-all"
-            />
+        {/* Dynamic Mobile Navbar Header Area */}
+        <div className="flex items-center gap-4 border-b border-white/5 pb-6">
+          <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 bg-slate-900 border border-white/10 rounded-xl text-slate-400 hover:text-white">
+            <Bars className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-xl md:text-3xl font-black uppercase tracking-tight">System Control Core</h1>
           </div>
         </div>
 
-        {/* Analytical Metric Matrix Dashboard Overview */}
+        {/* Global Dashboard Metrics Grid System */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div className="bg-slate-900/40 border border-white/10 p-5 rounded-2xl flex items-center gap-4 shadow-xl backdrop-blur-xs">
-            <div className="w-11 h-11 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-violet-400">
+          <div className="bg-slate-900 border border-white/10 p-5 rounded-2xl flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Catalog Entities</p>
-              <h3 className="text-xl md:text-2xl font-black tracking-tight mt-0.5">{catalog.length} Unique Titles</h3>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Books Listed</p>
+              <h3 className="text-xl font-black">{totalBooksListed} Volumes</h3>
             </div>
           </div>
 
-          <div className="bg-slate-900/40 border border-white/10 p-5 rounded-2xl flex items-center gap-4 shadow-xl backdrop-blur-xs">
-            <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-              <Clock className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Active Pipeline Demands</p>
-              <h3 className="text-xl md:text-2xl font-black tracking-tight mt-0.5">{distributionRequests.filter(r => r.status.includes('Awaiting') || r.status.includes('Inspection')).length} Unsettled</h3>
-            </div>
-          </div>
-
-          <div className="bg-slate-900/40 border border-white/10 p-5 rounded-2xl flex items-center gap-4 shadow-xl backdrop-blur-xs">
-            <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+          <div className="bg-slate-900 border border-white/10 p-5 rounded-2xl flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
               <Receipt className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Aggregated Digital Asset Value</p>
-              <h3 className="text-xl md:text-2xl font-black tracking-tight mt-0.5">$314.50</h3>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Gross Cumulative Earnings</p>
+              <h3 className="text-xl font-black">${totalEarnings.toFixed(2)} USD</h3>
+            </div>
+          </div>
+
+          <div className="bg-slate-900 border border-white/10 p-5 rounded-2xl flex items-center gap-4">
+            <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+              <Trolley className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Active Pending Request Loops</p>
+              <h3 className="text-xl font-black">{activePendingRequests} Nodes</h3>
             </div>
           </div>
         </div>
 
-        {/* ========================================================================= */}
-        {/* ACTIVE MODULE VIEWPORTS                                                  */}
-        {/* ========================================================================= */}
-        
-        {/* TAB 1: MASTER CATALOG ENTRIES CONTROL */}
-        {activeTab === 'catalog' && (
-          <div className="space-y-6 animate-in fade-in duration-300">
-            <div className="flex items-center justify-between border-b border-white/5 pb-3">
-              <div className="flex items-center gap-3">
-                <h2 className="font-bold text-sm uppercase tracking-wider text-slate-300">Storage Core Indexes</h2>
-                <button className="flex items-center gap-1.5 px-2.5 py-1 bg-violet-600 hover:bg-violet-500 rounded-md font-bold text-[10px] uppercase tracking-wide transition-colors">
-                  <Plus className="w-3.5 h-3.5" /> Initialize New Volume
-                </button>
-              </div>
-              <div className="flex bg-white/5 border border-white/10 rounded-lg p-0.5">
-                <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-violet-600 text-white' : 'text-slate-400'}`}>
-                  <LayoutCells className="w-3.5 h-3.5" />
-                </button>
-                <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-violet-600 text-white' : 'text-slate-400'}`}>
-                  <LayoutList className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-
-            {viewMode === 'grid' ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {catalog.map((book) => (
-                  <div key={book.id} className="group relative bg-slate-900/40 border border-white/10 hover:border-violet-500/40 rounded-2xl overflow-hidden shadow-xl transition-all duration-300 flex flex-col h-full">
-                    <div className="h-44 w-full relative bg-slate-950 overflow-hidden">
-                      <Image src={book.coverImage} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80" />
-                      <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                      <span className="absolute bottom-3 left-4 text-[9px] font-black uppercase tracking-widest bg-violet-600 border border-violet-400/30 px-2 py-0.5 rounded-md">
-                        {book.category}
-                      </span>
-                    </div>
-                    <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
-                      <div>
-                        <h4 className="font-bold text-white text-base leading-tight group-hover:text-violet-400 transition-colors">{book.title}</h4>
-                        <p className="text-slate-400 text-xs mt-1">{book.author}</p>
-                      </div>
-                      
-                      {/* Inventory Adjustments Pipeline HUD */}
-                      <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-                        <div>
-                          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Allocated Vault Stock</p>
-                          <p className="text-sm font-black tracking-tight text-slate-200 mt-0.5">
-                            <span className={book.availableCopies === 0 ? "text-rose-400" : "text-emerald-400"}>{book.availableCopies}</span> / {book.totalCopies} Available
-                          </p>
-                        </div>
-                        <div className="flex gap-1 bg-slate-950/60 p-1 border border-white/5 rounded-lg">
-                          <button onClick={() => updateAvailableStock(book.id, -1)} className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center font-bold text-xs transition-colors" title="Decrement Internal Stock">-</button>
-                          <button onClick={() => updateAvailableStock(book.id, 1)} className="w-6 h-6 rounded-md bg-white/5 hover:bg-white/10 flex items-center justify-center font-bold text-xs transition-colors" title="Increment Internal Stock">+</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+        {/* VIEW TAB 1: Overview Analytics Graphics Panel */}
+        {activeTab === 'overview' && (
+          <div className="bg-slate-900/40 border border-white/10 rounded-2xl p-6 space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Activity Distribution Ledger Matrix</h3>
+            {analyticalChartBars.length === 0 ? (
+              <p className="text-slate-500 text-xs italic py-4">No data logged metrics present.</p>
             ) : (
-              <div className="space-y-2">
-                {catalog.map((book) => (
-                  <div key={book.id} className="bg-slate-900/30 border border-white/10 p-4 rounded-xl flex items-center justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-bold text-sm text-white truncate">{book.title}</h4>
-                      <p className="text-xs text-slate-400 truncate">{book.author} — <span className="text-[10px] font-semibold text-violet-400 bg-violet-500/10 px-1.5 py-0.5 rounded-md">{book.category}</span></p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-xs font-bold text-slate-300">{book.availableCopies}/{book.totalCopies} Units Available</p>
-                      <p className="text-[10px] text-slate-500 mt-0.5">Rental Base Fee: {book.price}</p>
-                    </div>
-                  </div>
+              <div className="h-40 bg-linear-to-b from-white/5 to-transparent rounded-xl border border-white/5 relative flex items-end p-4 gap-2">
+                {analyticalChartBars.map((node) => (
+                  <div key={node.id} style={{ height: `${node.height}%` }} className="w-full bg-amber-500/20 hover:bg-amber-500/40 border border-amber-500/10 transition-all rounded" />
                 ))}
               </div>
             )}
           </div>
         )}
 
-        {/* TAB 2: ACTIVE LEASE AND LEAVE VERIFICATION LOGISTICS */}
-        {activeTab === 'inventory_requests' && (
-          <div className="bg-slate-900/20 border border-white/10 rounded-2xl shadow-xl overflow-hidden animate-in fade-in duration-300">
-            <div className="p-5 border-b border-white/5 bg-slate-900/40">
-              <h2 className="font-bold text-sm uppercase tracking-wider text-slate-300">Distribution Queue Pipeline</h2>
+        {/* VIEW TAB 2: Ingest New Volume Forms System */}
+        {activeTab === 'add-book' && (
+          <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-6 max-w-2xl shadow-xl">
+            <div className="mb-6">
+              <h2 className="font-bold text-sm uppercase tracking-wider text-slate-200">Catalog Registry Form Ingestion</h2>
+              <p className="text-[11px] text-slate-500 mt-0.5">Newly logged items enter the database defaulted as 'Pending Approval'.</p>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-white/10 text-slate-400 font-semibold bg-white/5">
-                    <th className="p-4">Requested Asset Identifier</th>
-                    <th className="p-4">Consumer Target</th>
-                    <th className="p-4">Transaction Type</th>
-                    <th className="p-4">Pipeline Status Check</th>
-                    <th className="p-4 text-right">Administrative Execution</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {distributionRequests.map((req) => (
-                    <tr key={req.id} className="hover:bg-white/5 transition-colors group">
-                      <td className="p-4 font-bold text-white group-hover:text-violet-400 transition-colors">{req.title}</td>
-                      <td className="p-4 font-medium text-slate-300">{req.requester}</td>
-                      <td className="p-4 text-slate-400 font-mono text-[11px]">{req.type}</td>
-                      <td className="p-4"><span className={getStatusBadge(req.status)}>{req.status}</span></td>
-                      <td className="p-4 text-right">
-                        {(req.status === 'Awaiting Action' || req.status === 'In Inspection') ? (
-                          <div className="flex justify-end gap-1.5">
-                            <button onClick={() => processRequest(req.id, 'Approved')} className="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] uppercase rounded-md transition-colors">
-                              Approve
-                            </button>
-                            <button onClick={() => processRequest(req.id, 'Rejected')} className="px-2 py-1 bg-rose-600/20 hover:bg-rose-600 text-rose-400 font-bold text-[10px] uppercase border border-rose-500/20 rounded-md transition-colors">
-                              Reject
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-slate-500 italic text-[11px]">Handshake Settled</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: INFRASTRUCTURE CORE TELEMETRY METRICS */}
-        {activeTab === 'telemetry' && (
-          <div className="space-y-5 animate-in fade-in duration-300">
-            <h2 className="font-bold text-sm uppercase tracking-wider text-slate-300 border-b border-white/5 pb-2">Active Infrastructure Telemetry Registers</h2>
-            
-            <div className="space-y-3">
-              {telemetryLogs.map((log) => (
-                <div key={log.id} className="bg-slate-900/40 border border-white/10 rounded-xl p-4 flex items-center justify-between gap-4 font-mono text-xs">
-                  <div className="flex items-center gap-3 min-w-0">
-                    {log.status === 'Success' ? (
-                      <CircleCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <CircleExclamation className="w-4 h-4 text-amber-400 shrink-0" />
-                    )}
-                    <div className="truncate">
-                      <span className="text-slate-500 font-bold mr-2">[{log.id}]</span>
-                      <span className="text-slate-200 font-semibold">{log.event}</span>
-                      <span className="text-slate-500 ml-2">({log.component})</span>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0 flex items-center gap-3">
-                    <span className="text-[10px] text-slate-500">{log.timestamp}</span>
-                    <span className={getStatusBadge(log.status)}>{log.status}</span>
-                  </div>
+            <form onSubmit={handleAddBookSubmit} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-slate-400 font-semibold">Book Title Target</label>
+                  <input type="text" required value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white focus:outline-hidden focus:border-amber-500" placeholder="e.g. Clean Architecture Core" />
                 </div>
-              ))}
-            </div>
+                <div className="space-y-1.5">
+                  <label className="text-slate-400 font-semibold">Author Authority Name</label>
+                  <input type="text" required value={formData.author} onChange={(e) => setFormData({...formData, author: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white focus:outline-hidden focus:border-amber-500" placeholder="e.g. Robert C. Martin" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-slate-400 font-semibold">System Delivery Access Fee (USD)</label>
+                  <input type="number" step="0.01" required value={formData.fee} onChange={(e) => setFormData({...formData, fee: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white focus:outline-hidden focus:border-amber-500" placeholder="5.00" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-slate-400 font-semibold">Category Segment Class</label>
+                  <input type="text" required value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white focus:outline-hidden focus:border-amber-500" placeholder="e.g. Software Engineering" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-slate-400 font-semibold">Narrative Description Analysis</label>
+                <textarea required value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white focus:outline-hidden focus:border-amber-500" rows={4} placeholder="Summarize text parameters..." />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-slate-400 font-semibold">Cover Thumbnail Binary File Asset</label>
+                <div className="border border-dashed border-white/10 rounded-xl bg-slate-950 p-4 text-center relative flex flex-col items-center justify-center gap-2 hover:bg-slate-900/50 transition-colors">
+                  <input type="file" accept="image/*" required onChange={(e) => setSelectedFile(e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
+                  <Picture className="w-6 h-6 text-slate-500" />
+                  <span className="text-slate-400 font-mono tracking-tight">{selectedFile ? selectedFile.name : "Choose network file asset image package..."}</span>
+                </div>
+              </div>
+
+              <button type="submit" disabled={isSubmittingBook} className="w-full py-3 bg-amber-500 hover:bg-amber-400 disabled:bg-slate-800 text-black font-black uppercase tracking-wider rounded-xl transition-all">
+                {isSubmittingBook ? "Uploading to imgBB hosting databases..." : "Commit Asset to System Ledger"}
+              </button>
+            </form>
           </div>
         )}
 
+        {/* VIEW TAB 3: Manage Inventory Matrix Table */}
+        {activeTab === 'inventory' && (
+          <div className="bg-slate-900/50 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+            <div className="p-5 border-b border-white/5 bg-slate-900">
+              <h2 className="font-bold text-xs uppercase tracking-wider text-slate-300">Registered Volumes Ingestion Log</h2>
+            </div>
+            {inventory.length === 0 ? (
+              <p className="p-6 text-xs text-slate-500 text-center italic">No book volumes found linked to your credentials.</p>
+            ) : (
+              <div className="overflow-x-auto text-xs">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/10 text-slate-400 font-semibold bg-white/5">
+                      <th className="p-4">Volume Book Title</th>
+                      <th className="p-4">Category</th>
+                      <th className="p-4">Status Flag Node</th>
+                      <th className="p-4 text-right">Ledger Processing Controls</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {inventory.map((book) => (
+                      <tr key={book._id} className="hover:bg-white/2 transition-colors">
+                        <td className="p-4 font-bold text-white">{book.title}</td>
+                        <td className="p-4 text-slate-400">{book.category}</td>
+                        <td className="p-4">
+                          <span className={`px-2 py-0.5 text-[10px] border font-bold uppercase tracking-wider rounded-md ${
+                            book.status === 'Pending Approval' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                            book.status === 'Published' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                            'bg-slate-800 text-slate-400 border-white/5'
+                          }`}>
+                            {book.status}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right space-x-2">
+                          <button 
+                            disabled={book.status === 'Pending Approval'} 
+                            onClick={() => toggleBookStatus(book._id, book.status)}
+                            className="px-3 py-1 bg-white/5 border border-white/5 hover:border-amber-500/30 font-bold text-[10px] uppercase tracking-wider rounded-md disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                          >
+                            {book.status === 'Published' ? "Unpublish" : "Publish Toggle"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* VIEW TAB 4: Manage Deliveries Inbound Channels Table */}
+        {activeTab === 'deliveries' && (
+          <div className="bg-slate-900/50 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+            <div className="p-5 border-b border-white/5 bg-slate-900">
+              <h2 className="font-bold text-xs uppercase tracking-wider text-slate-300">Active Request Fulfillment Pipeline Queue</h2>
+            </div>
+            {allOrders.length === 0 ? (
+              <p className="p-6 text-xs text-slate-500 text-center italic">No active fulfillment pipeline elements logged inside database lines.</p>
+            ) : (
+              <div className="overflow-x-auto text-xs">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/10 text-slate-400 font-semibold bg-white/5">
+                      <th className="p-4">Client Target Account</th>
+                      <th className="p-4">Book Title Anchor</th>
+                      <th className="p-4">Pipeline Node Status</th>
+                      <th className="p-4 text-right">Routing Gate Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {allOrders.map((order) => (
+                      <tr key={order._id} className="hover:bg-white/2 transition-colors">
+                        <td className="p-4 font-bold text-white">{order.userEmail}</td>
+                        <td className="p-4 text-slate-400">{order.title || "Catalog Volume Package"}</td>
+                        <td className="p-4">
+                          <span className={`px-2 py-0.5 text-[10px] border font-bold uppercase tracking-wider rounded-md ${
+                            order.status === 'Pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                            order.status === 'Dispatched' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                            'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          }`}>
+                            {order.status}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right space-x-2">
+                          {order.status === 'Pending' && (
+                            <button onClick={() => mutateOrderStatus(order._id, 'Dispatched')} className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[10px] uppercase tracking-wider rounded-md transition-all">
+                              Approve & Dispatch
+                            </button>
+                          )}
+                          {order.status === 'Dispatched' && (
+                            <button onClick={() => mutateOrderStatus(order._id, 'Delivered')} className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] uppercase tracking-wider rounded-md transition-all">
+                              Mark Delivered
+                            </button>
+                          )}
+                          {order.status === 'Delivered' && (
+                            <span className="text-slate-500 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold">
+                              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Settled Node
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );
