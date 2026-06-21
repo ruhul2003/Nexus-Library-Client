@@ -6,7 +6,7 @@ import { FcGoogle } from "react-icons/fc";
 import { Envelope, Lock, ArrowRight, BookOpen, Person, Camera } from '@gravity-ui/icons';
 import { authClient } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';
-import { Image } from 'next/image';
+import Image from 'next/image'; 
 
 export default function SignupPage() {
   const router = useRouter();
@@ -199,7 +199,7 @@ export default function SignupPage() {
             <div className="flex flex-col items-center sm:flex-row gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
               <div className="relative w-16 h-16 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center overflow-hidden shrink-0">
                 {imagePreview ? (
-                  <Image src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                  <Image src={imagePreview} width={100} height={100} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
                   <Camera className="w-6 h-6 text-slate-400" />
                 )}

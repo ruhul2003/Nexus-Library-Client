@@ -3,7 +3,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Star, Bookmark, PencilToSquare, TrashBin, EyeSlash } from '@gravity-ui/icons';
 import { redirect } from 'next/navigation';
-// 💡 Better Auth বা আপনার অথেন্টিকেশন প্যাকেজ থেকে auth এবং headers ইম্পোর্ট করুন
 import { auth } from "@/lib/auth"; 
 import { headers } from "next/headers";
 
@@ -14,7 +13,6 @@ const BookDetailsPage = async ({ params }) => {
   let book = null;
   let error = null;
 
-  // ১. ইউজারের সেশন এবং রোল চেক করা (Server Side)
   let isLibrarian = false;
   try {
     const session = await auth.api.getSession({ headers: await headers() });
@@ -43,7 +41,6 @@ const BookDetailsPage = async ({ params }) => {
     error = err.message;
   }
 
-  // Regular User Checkout Action
   async function handleCheckout() {
     'use server';
     
@@ -78,7 +75,6 @@ const BookDetailsPage = async ({ params }) => {
     if (redirectUrl) redirect(redirectUrl);
   }
 
-  // 💡 Librarian Action: Unpublish (ব্যাকএন্ডের জি নম্বর এন্ডপয়েন্টের সাথে কানেক্টেড)
   async function handleUnpublish() {
     'use server';
     const targetUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -86,18 +82,17 @@ const BookDetailsPage = async ({ params }) => {
       const response = await fetch(`${targetUrl}/api/books/${id}/visibility`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'Unpublished' }), // আপনার ব্যাকএন্ডের এক্সপেক্টেড স্ট্যাটাস
+        body: JSON.stringify({ status: 'Unpublished' }), 
       });
 
       if (response.ok) {
-        redirect('/books'); // সফলভাবে আনপাবলিশ হলে ক্যাটালগে রিডাইরেক্ট করবে
+        redirect('/books'); 
       }
     } catch (err) {
       console.error("Failed to unpublish book:", err);
     }
   }
 
-  // 💡 Librarian Action: Delete (যদি ব্যাকএন্ডে ডিলিট এন্ডপয়েন্ট যোগ করেন তার জন্য রেডি স্ট্রাকচার)
   async function handleDelete() {
     'use server';
     const targetUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -140,7 +135,7 @@ const BookDetailsPage = async ({ params }) => {
         <div className="md:col-span-5 lg:col-span-4">
           <div className="relative aspect-4/5 w-full rounded-3xl overflow-hidden bg-slate-950 border border-white/10 shadow-2xl">
             <Image
-              src={book.imageUrl || book.coverImage || '/images/book-placeholder.jpg'} // ব্যাকএন্ডে imageUrl হিসেবে সেভ হচ্ছে
+              src={book.imageUrl || book.coverImage || '/images/book-placeholder.jpg'} 
               alt={book.title}
               fill
               priority
@@ -199,7 +194,6 @@ const BookDetailsPage = async ({ params }) => {
             </div>
           </div>
 
-          {/* 💡 কন্ডিশনাল বাটন কন্ট্রোল এরিয়া */}
           <div className="pt-6">
             {isLibrarian ? (
               /* --- LIBRARIAN CONTROLS --- */

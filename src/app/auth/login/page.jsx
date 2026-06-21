@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { FcGoogle } from "react-icons/fc";
 import { Lock, ArrowRight, BookOpen, At } from '@gravity-ui/icons';
-import { authClient } from '@/lib/auth-client'; // Import your client bundle
+import { authClient } from '@/lib/auth-client'; 
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
@@ -14,9 +14,21 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  // Track system operations
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // রোল অনুযায়ী সঠিক ড্যাশবোর্ডে রিডাইরেক্ট করার হেল্পার ফাংশন
+  const redirectBasedOnRole = (sessionData) => {
+    // Better Auth বা কাস্টম সেটআপে সাধারণত সেশন বা ইউজার অবজেক্টের ভেতর রোল থাকে
+    const role = sessionData?.user?.role || 'reader'; 
+    
+    if (role === 'librarian') {
+      router.push('/dashboard/librarian');
+    } else {
+      router.push('/dashboard/reader');
+    }
+    router.refresh();
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -24,13 +36,15 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      await authClient.signIn.email({
+      const { data, error: authError } = await authClient.signIn.email({
         email,
         password,
       });
 
-      router.push('/dashboard/reader');
-      router.refresh();
+      if (authError) throw authError;
+
+      // সফল লগইনের পর প্রাপ্ত সেশন ডেটা থেকে রোল চেক করছি
+      redirectBasedOnRole(data);
     } catch (err) {
       setError(err.message || "Invalid credentials. Please try again.");
     } finally {
@@ -38,18 +52,18 @@ export default function LoginPage() {
     }
   };
 
-  // Modify only your handleGoogleSignIn function inside LoginPage to mirror this metadata logic:
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
+      setError(null);
+      
+      // সোশ্যাল লগইনের ক্ষেত্রে callbackURL-এ একটি নির্দিষ্ট এপিআই বা মিডলওয়্যার রাউটে পাঠানো ভালো 
+      // যা ইউজারকে তার রোল অনুযায়ী রিডাইরেক্ট করবে। তবে সরাসরি ফ্রন্টএন্ড হ্যান্ডেল করতে চাইলে নিচের মতো করতে পারেন:
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: '/dashboard/reader',
-        newUserOptions: {
-          data: {
-            role: "reader" // Default fallback if they sign in from the login page directly
-          }
-        }
+        // যদি আপনার মিডলওয়্যার বা ব্যাকএন্ডে স্বয়ংক্রিয় রিডাইরেক্ট পলিসি থাকে, তবে সেটি বেস্ট।
+        // অন্যথায় সাকসেসফুল ওঅথ ল্যান্ডিং পেজে রোল চেক করে রিডাইরেক্ট কোড যোগ করতে হবে।
+        callbackURL: '/dashboard/reader', 
       });
     } catch (err) {
       setError(err.message || "Social login failed.");
@@ -172,7 +186,7 @@ export default function LoginPage() {
                 <div className="w-full border-t border-slate-100"></div>
               </div>
               <div className="relative flex justify-center text-[10px] uppercase tracking-wider">
-                <span className="bg-white px-3 text-slate-400 font-semibold">Or platform sign in</span>
+                <span className="bg-white px-3 text-slate-400 font-semibold">Or platform sign up</span>
               </div>
             </div>
 
