@@ -2,9 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation'; // Imported for active route tracking
+import { usePathname } from 'next/navigation'; 
 import { authClient } from '@/lib/auth-client';
-import { Person, ArrowRightFromSquare } from '@gravity-ui/icons';
+import { ArrowRightFromSquare } from '@gravity-ui/icons';
 import Image from 'next/image';
 
 const navLinks = [
@@ -15,12 +15,14 @@ const navLinks = [
 ];
 
 const NavBar = () => {
-  const pathname = usePathname(); // Extract the current active URL path
+  const pathname = usePathname(); 
   const session = authClient.useSession();
   const isLoggedIn = !!session?.data;
   const user = session?.data?.user;
 
-  // Handle logout process
+  // ইউজারের রোল অনুযায়ী ড্যাশবোর্ড ইউআরএল নির্ধারণ (ডিফল্ট: reader)
+  const dashboardPath = user?.role === 'librarian' ? '/dashboard/librarian' : '/dashboard/reader';
+
   const handleLogout = async () => {
     await authClient.signOut();
   };
@@ -43,7 +45,6 @@ const NavBar = () => {
           {/* Navigation Links */}
           <div className="hidden md:flex items-center gap-8 text-sm font-medium">
             {navLinks.map((link) => {
-              // Check if the current link path matches the current active route
               const isActive = pathname === link.path;
 
               return (
@@ -65,13 +66,12 @@ const NavBar = () => {
           {/* Auth/Profile Section */}
           <div className="flex items-center gap-5">
             {isLoggedIn ? (
-              /* Authenticated User Layout Section */
               <div className="flex items-center gap-4">
-                {/* Profile Link Badge */}
+                {/* ডাইনামিক ড্যাশবোর্ড বাটন */}
                 <Link 
-                  href="/dashboard/reader" 
+                  href={dashboardPath} 
                   className={`flex items-center gap-2 bg-white/5 hover:bg-white/10 border rounded-xl px-3 py-1.5 transition text-sm font-medium max-w-[160px] ${
-                    pathname === '/dahboard/reader' 
+                    pathname === dashboardPath 
                       ? 'border-indigo-500 text-indigo-400' 
                       : 'border-white/10 text-white'
                   }`}
@@ -86,7 +86,7 @@ const NavBar = () => {
                     />
                   ) : (
                     <Image 
-                      src={user?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop"} 
+                      src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop" 
                       width={20}
                       height={20}
                       alt="avatar" 
@@ -108,7 +108,6 @@ const NavBar = () => {
                 </button>
               </div>
             ) : (
-              /* Anonymous/Logged Out Layout Section */
               <>
                 <Link
                   href="/auth/login"
