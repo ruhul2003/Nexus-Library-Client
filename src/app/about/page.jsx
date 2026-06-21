@@ -12,14 +12,12 @@ import {
   Layers 
 } from "lucide-react";
 
-// প্ল্যাটফর্মের ৩টি মূল পিলার বা স্ট্যাটস
 const stats = [
   { id: 1, label: "Curated Volumes", value: "10K+", icon: BookOpen },
   { id: 2, label: "Active Readers", value: "5,000+", icon: Users },
   { id: 3, label: "Global Authors", value: "350+", icon: Globe },
 ];
 
-// আমাদের কোর ভ্যালু বা বৈশিষ্ট্য
 const values = [
   {
     title: "Curated Excellence",
@@ -41,7 +39,6 @@ const values = [
   }
 ];
 
-// Framer Motion অ্যানিমেশন কনফিগারেশন
 const fadeIn = {
   hidden: { opacity: 0, y: 20 },
   visible: (delay = 0) => ({
@@ -73,7 +70,7 @@ export default function AboutPage() {
             initial="hidden"
             animate="visible"
             custom={0.1}
-            className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight bg-gradient-to-b from-white to-slate-400 bg-clip-text text-transparent"
+            className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight bg-linear-to-b from-white to-slate-400 bg-clip-text text-transparent"
           >
             Bridging Minds Through Curated Volumes.
           </motion.h1>

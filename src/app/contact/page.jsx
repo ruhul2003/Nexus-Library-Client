@@ -91,7 +91,7 @@ export default function ContactPage() {
             <MessageSquare className="w-3.5 h-3.5" /> Support Terminal
           </motion.div>
           
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-tight bg-gradient-to-b from-white to-slate-400 bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-tight bg-linear-to-b from-white to-slate-400 bg-clip-text text-transparent">
             Get in Touch
           </h1>
           

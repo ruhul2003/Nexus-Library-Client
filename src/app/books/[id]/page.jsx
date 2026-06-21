@@ -1,8 +1,11 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, Star, Bookmark } from '@gravity-ui/icons';
+import { ArrowLeft, Star, Bookmark, PencilToSquare, TrashBin, EyeSlash } from '@gravity-ui/icons';
 import { redirect } from 'next/navigation';
+// 💡 Better Auth বা আপনার অথেন্টিকেশন প্যাকেজ থেকে auth এবং headers ইম্পোর্ট করুন
+import { auth } from "@/lib/auth"; 
+import { headers } from "next/headers";
 
 export const revalidate = 0;
 
@@ -10,6 +13,18 @@ const BookDetailsPage = async ({ params }) => {
   const { id } = await params;
   let book = null;
   let error = null;
+
+  // ১. ইউজারের সেশন এবং রোল চেক করা (Server Side)
+  let isLibrarian = false;
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (session?.user?.role === 'librarian') {
+      isLibrarian = true;
+    }
+
+  } catch (authErr) {
+    console.error("Auth session fetch failed:", authErr);
+  }
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -28,7 +43,7 @@ const BookDetailsPage = async ({ params }) => {
     error = err.message;
   }
 
-  // Handle Checkout via Inline Next.js Server Action
+  // Regular User Checkout Action
   async function handleCheckout() {
     'use server';
     
@@ -39,9 +54,7 @@ const BookDetailsPage = async ({ params }) => {
     try {
       const response = await fetch(`${targetUrl}/api/checkout_sessions`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           cartItems: [
             {
@@ -55,19 +68,49 @@ const BookDetailsPage = async ({ params }) => {
       });
 
       const sessionData = await response.json();
-      
       if (sessionData?.success && sessionData?.url) {
-        redirectUrl = sessionData.url; // এখানে ইউআরএলটি সেভ করে রাখছি
-      } else {
-        console.error("Backend response error:", sessionData);
+        redirectUrl = sessionData.url; 
       }
     } catch (err) {
       console.error("Server Action Fetch Error:", err);
     }
 
-    // try-catch এর বাইরে এসে রিডাইরেক্ট করতে হবে
-    if (redirectUrl) {
-      redirect(redirectUrl);
+    if (redirectUrl) redirect(redirectUrl);
+  }
+
+  // 💡 Librarian Action: Unpublish (ব্যাকএন্ডের জি নম্বর এন্ডপয়েন্টের সাথে কানেক্টেড)
+  async function handleUnpublish() {
+    'use server';
+    const targetUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    try {
+      const response = await fetch(`${targetUrl}/api/books/${id}/visibility`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Unpublished' }), // আপনার ব্যাকএন্ডের এক্সপেক্টেড স্ট্যাটাস
+      });
+
+      if (response.ok) {
+        redirect('/books'); // সফলভাবে আনপাবলিশ হলে ক্যাটালগে রিডাইরেক্ট করবে
+      }
+    } catch (err) {
+      console.error("Failed to unpublish book:", err);
+    }
+  }
+
+  // 💡 Librarian Action: Delete (যদি ব্যাকএন্ডে ডিলিট এন্ডপয়েন্ট যোগ করেন তার জন্য রেডি স্ট্রাকচার)
+  async function handleDelete() {
+    'use server';
+    const targetUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    try {
+      const response = await fetch(`${targetUrl}/api/books/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        redirect('/books');
+      }
+    } catch (err) {
+      console.error("Failed to delete book:", err);
     }
   }
 
@@ -88,16 +131,16 @@ const BookDetailsPage = async ({ params }) => {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto pb-16 space-y-8 px-4">
+    <div className="w-full min-h-[80vh] max-w-6xl mx-auto pb-16 space-y-8 px-4">
       <Link href="/books" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white transition group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Universal Catalog
       </Link>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start">
         <div className="md:col-span-5 lg:col-span-4">
-          <div className="relative aspect-[4/5] w-full rounded-3xl overflow-hidden bg-slate-950 border border-white/10 shadow-2xl">
+          <div className="relative aspect-4/5 w-full rounded-3xl overflow-hidden bg-slate-950 border border-white/10 shadow-2xl">
             <Image
-              src={book.coverImage || '/images/book-placeholder.jpg'}
+              src={book.imageUrl || book.coverImage || '/images/book-placeholder.jpg'} // ব্যাকএন্ডে imageUrl হিসেবে সেভ হচ্ছে
               alt={book.title}
               fill
               priority
@@ -143,33 +186,71 @@ const BookDetailsPage = async ({ params }) => {
 
             <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5">
               <p className="text-xs uppercase tracking-widest text-slate-500">Available</p>
-              <p className={`text-3xl font-black mt-1 ${book.availableCopies > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                {book.availableCopies ?? 0} / {book.totalCopies ?? 1}
+              <p className={`text-3xl font-black mt-1 ${book.availableCopies > 0 || book.availableCopies === undefined ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {book.availableCopies ?? 1} / {book.totalCopies ?? 1}
               </p>
             </div>
 
             <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5">
               <p className="text-xs uppercase tracking-widest text-slate-500">Status</p>
               <p className={`mt-2 font-medium flex items-center gap-2 ${(book.availableCopies > 0 || book.availableCopies === undefined) ? 'text-emerald-400' : 'text-orange-400'}`}>
-                {(book.availableCopies > 0 || book.availableCopies === undefined) ? <>✅ Available Now</> : <>⏳ On Waiting List</>}
+                {(book.availableCopies > 0 || book.availableCopies === undefined) ? <>Available Now</> : <>On Waiting List</>}
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 pt-6">
-            <form action={handleCheckout} className="flex-1">
-              <button 
-                type="submit"
-                className="w-full bg-linear-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold py-4 rounded-2xl transition shadow-lg cursor-pointer"
-              >
-                Order Now
-              </button>
-            </form>
+          {/* 💡 কন্ডিশনাল বাটন কন্ট্রোল এরিয়া */}
+          <div className="pt-6">
+            {isLibrarian ? (
+              /* --- LIBRARIAN CONTROLS --- */
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+                {/* Edit Button */}
+                <Link 
+                  href={`/dashboard/books/edit/${book._id}`}
+                  className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 px-4 rounded-2xl transition shadow-lg cursor-pointer text-sm"
+                >
+                  <PencilToSquare className="w-4 h-4" /> Edit Asset
+                </Link>
 
-            <button type="button" className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-slate-300 hover:text-white transition cursor-pointer">
-              <Bookmark className="w-6 h-6" />
-            </button>
+                {/* Unpublish Action */}
+                <form action={handleUnpublish} className="w-full">
+                  <button 
+                    type="submit"
+                    className="w-full inline-flex items-center justify-center gap-2 bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/30 text-amber-400 font-bold py-4 px-4 rounded-2xl transition cursor-pointer text-sm"
+                  >
+                    <EyeSlash className="w-4 h-4" /> Unpublish
+                  </button>
+                </form>
+
+                {/* Delete Action */}
+                <form action={handleDelete} className="w-full">
+                  <button 
+                    type="submit"
+                    className="w-full inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-500 text-white font-bold py-4 px-4 rounded-2xl transition shadow-lg cursor-pointer text-sm"
+                  >
+                    <TrashBin className="w-4 h-4" /> Delete Volume
+                  </button>
+                </form>
+              </div>
+            ) : (
+              /* --- REGULAR USER CONTROLS --- */
+              <div className="flex flex-col sm:flex-row gap-3">
+                <form action={handleCheckout} className="flex-1">
+                  <button 
+                    type="submit"
+                    className="w-full bg-linear-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold py-4 rounded-2xl transition shadow-lg cursor-pointer"
+                  >
+                    Order Now
+                  </button>
+                </form>
+
+                <button type="button" className="p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-slate-300 hover:text-white transition cursor-pointer">
+                  <Bookmark className="w-6 h-6" />
+                </button>
+              </div>
+            )}
           </div>
+
         </div>
       </div>
     </div>
