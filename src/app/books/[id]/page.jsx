@@ -19,7 +19,6 @@ const BookDetailsPage = async ({ params }) => {
     if (session?.user?.role === 'librarian') {
       isLibrarian = true;
     }
-
   } catch (authErr) {
     console.error("Auth session fetch failed:", authErr);
   }
@@ -43,7 +42,6 @@ const BookDetailsPage = async ({ params }) => {
 
   async function handleCheckout() {
     'use server';
-    
     const targetUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     const finalPrice = book?.price || book?.fee || 0;
     let redirectUrl = null;
@@ -198,15 +196,14 @@ const BookDetailsPage = async ({ params }) => {
             {isLibrarian ? (
               /* --- LIBRARIAN CONTROLS --- */
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
-                {/* Edit Button */}
+                {/* 💡 FIXED ROUTE HERE */}
                 <Link 
-                  href={`/dashboard/books/edit/${book._id}`}
+                  href={`/books/${book._id}/edit`}
                   className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 px-4 rounded-2xl transition shadow-lg cursor-pointer text-sm"
                 >
                   <PencilToSquare className="w-4 h-4" /> Edit Asset
                 </Link>
 
-                {/* Unpublish Action */}
                 <form action={handleUnpublish} className="w-full">
                   <button 
                     type="submit"
@@ -216,7 +213,6 @@ const BookDetailsPage = async ({ params }) => {
                   </button>
                 </form>
 
-                {/* Delete Action */}
                 <form action={handleDelete} className="w-full">
                   <button 
                     type="submit"
