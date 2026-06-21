@@ -8,6 +8,7 @@ import { ArrowRightFromSquare } from '@gravity-ui/icons';
 import Image from 'next/image';
 
 const navLinks = [
+  { name: 'Home', path: '/' },
   { name: 'Browse Books', path: '/books' },
   { name: 'Categories', path: '/categories' },
   { name: 'About', path: '/about' },
@@ -20,7 +21,6 @@ const NavBar = () => {
   const isLoggedIn = !!session?.data;
   const user = session?.data?.user;
 
-  // ইউজারের রোল অনুযায়ী ড্যাশবোর্ড ইউআরএল নির্ধারণ (ডিফল্ট: reader)
   const dashboardPath = user?.role === 'librarian' ? '/dashboard/librarian' : '/dashboard/reader';
 
   const handleLogout = async () => {
@@ -67,7 +67,6 @@ const NavBar = () => {
           <div className="flex items-center gap-5">
             {isLoggedIn ? (
               <div className="flex items-center gap-4">
-                {/* ডাইনামিক ড্যাশবোর্ড বাটন */}
                 <Link 
                   href={dashboardPath} 
                   className={`flex items-center gap-2 bg-white/5 hover:bg-white/10 border rounded-xl px-3 py-1.5 transition text-sm font-medium max-w-[160px] ${
