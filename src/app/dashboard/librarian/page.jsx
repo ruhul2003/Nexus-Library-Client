@@ -145,7 +145,7 @@ export default function LibrarianDashboard() {
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center font-black text-black shadow-md">L</div>
               <div>
-                <h2 className="font-black tracking-tight text-sm">LIBRARIAN_CORE</h2>
+                <h2 className="font-black tracking-tight text-sm">LIBRARIAN</h2>
                 <p className="text-[10px] font-bold tracking-wider text-amber-500 uppercase">System Panel</p>
               </div>
             </div>
@@ -375,7 +375,7 @@ export default function LibrarianDashboard() {
                           </span>
                         </td>
                         <td className="p-4 text-right space-x-2">
-                          {order.status === 'Pending' && (
+                          {order.status === 'Pending' && ( 
                             <button onClick={() => mutateOrderStatus(order._id, 'Dispatched')} className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[10px] uppercase tracking-wider rounded-md transition-all">
                               Approve & Dispatch
                             </button>
