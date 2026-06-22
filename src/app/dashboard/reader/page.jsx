@@ -32,43 +32,50 @@ export default function UserReaderDashboard() {
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-  // 1. Fetch User Orders Base Request
-  const fetchUserOrders = useCallback(() => {
+  // 1. Fetch User Orders Base Request (Separated foreground & background loaders to fix flickering)
+  const fetchUserOrders = useCallback((isBackground = false) => {
     if (!user?.email) return;
-    setIsLoadingData(true);
+    if (!isBackground) {
+      setIsLoadingData(true);
+    }
     fetch(`${API_BASE_URL}/api/orders/my-orders/${user.email}`)
       .then((res) => res.ok ? res.json() : [])
       .then((data) => setDeliveryHistory(data))
       .catch((err) => console.error("Error tracking orders:", err))
-      .finally(() => setIsLoadingData(false));
+      .finally(() => {
+        if (!isBackground) setIsLoadingData(false);
+      });
   }, [user?.email, API_BASE_URL]);
 
   useEffect(() => {
-    fetchUserOrders();
+    fetchUserOrders(false); // Initial Foreground loading indicator triggered
   }, [fetchUserOrders]);
 
-  // Polling Mechanism to automatically sync when Librarian approves the status
+  // Background Polling Engine (Does not trigger full-screen reloading spinner flicker anymore)
   useEffect(() => {
     if (!user?.email) return;
     const interval = setInterval(() => {
-      fetchUserOrders();
-    }, 8000); // Polls every 8 seconds for background pipeline pipeline sync
+      fetchUserOrders(true); // Silently poll in the background
+    }, 8000);
     return () => clearInterval(interval);
   }, [user?.email, fetchUserOrders]);
 
-  // 2. Enrich Data Engine Layer (Fixed Property Merging)
+  // 2. Enrich Data Engine Layer (Fixed Priority Mapping to fetch true Book Titles)
   useEffect(() => {
+    let isMounted = true;
+    
     const enrichOrders = async () => {
       if (deliveryHistory.length === 0) {
-        setEnrichedDeliveryHistory([]);
-        setEnrichedReadingList([]);
+        if (isMounted) {
+          setEnrichedDeliveryHistory([]);
+          setEnrichedReadingList([]);
+        }
         return;
       }
 
       const enriched = await Promise.all(
         deliveryHistory.map(async (order) => {
           try {
-            // Priority check: Use order.bookId or backup asset identification code
             const targetBookId = order.bookId || order.id || order._id;
             if (!targetBookId) return order;
 
@@ -78,7 +85,7 @@ export default function UserReaderDashboard() {
               return { 
                 ...bookData,          
                 ...order,             
-                title: order.title || bookData.title, // Prevents falling back to empty fields
+                title: bookData.title || order.title || "Unknown Book Node", // FIXED: bookData gets priority over order ledger fallbacks
                 status: order.status   
               };
             }
@@ -90,12 +97,17 @@ export default function UserReaderDashboard() {
         })
       );
 
-      setEnrichedDeliveryHistory(enriched);
-      const delivered = enriched.filter(item => item.status === 'Delivered');
-      setEnrichedReadingList(delivered);
+      if (isMounted) {
+        setEnrichedDeliveryHistory(enriched);
+        const delivered = enriched.filter(item => item.status === 'Delivered');
+        setEnrichedReadingList(delivered);
+      }
     };
 
     enrichOrders();
+    return () => {
+      isMounted = false;
+    };
   }, [deliveryHistory, API_BASE_URL]);
 
   // 3. Fetch User Reviews
@@ -298,7 +310,7 @@ export default function UserReaderDashboard() {
               <tbody className="divide-y divide-white/5">
                 {filteredDeliveryHistory.map((item) => (
                   <tr key={item._id} className="hover:bg-white/5">
-                    <td className="p-4 font-bold">{item.title || "Unknown Book Node"}</td>
+                    <td className="p-4 font-bold">{item.title}</td>
                     <td className="p-4">${item.fee?.toFixed(2)}</td>
                     <td className="p-4 text-right">
                       <span className={getStatusBadge(item.status)}>{item.status}</span>
@@ -310,7 +322,7 @@ export default function UserReaderDashboard() {
           </div>
         )}
 
-        {/* Reading List */}
+        {/* Reading List Tab */}
         {activeTab === 'reading-list' && (
           <div>
             {isLoadingData ? (
