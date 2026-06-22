@@ -34,17 +34,17 @@ export default async function SuccessPage({ searchParams }) {
     // ৩. এক্সপ্রেস ব্যাকএন্ডে ডেটা পাস করার নিরাপদ সার্ভার-টু-সার্ভার ফেচ
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      
+
       const confirmRes = await fetch(`${apiUrl}/api/orders/confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        // Inside the confirmRes fetch body:
         body: JSON.stringify({
           sessionId: session.id,
           customerEmail: session.customer_details?.email,
           amountTotal: session.amount_total,
-          // 💡 মেটাডেটা পাস করা হচ্ছে যাতে ব্যাকএন্ড ডেটাবেজে সঠিক বুক ট্র্যাক করা যায়
-          bookId: session.metadata?.bookId || null,
-          bookTitle: session.metadata?.bookTitle || null
+          bookId: session.metadata?.bookId,        // ← This is crucial
+          bookTitle: session.metadata?.bookTitle,
         }),
         cache: 'no-store'
       });
@@ -62,19 +62,19 @@ export default async function SuccessPage({ searchParams }) {
     return (
       <section className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6">
         <div className="max-w-md w-full bg-slate-900/50 border border-white/10 rounded-2xl p-8 text-center space-y-6 backdrop-blur-md">
-          
+
           {/* সাকসেস আইকন গ্রিড */}
           <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 mx-auto">
             <CircleCheck className="w-7 h-7" />
           </div>
-          
+
           {/* টেক্সট মেসেজ */}
           <div className="space-y-2">
             <h1 className="text-xl font-black uppercase tracking-wider text-emerald-400">
               Transaction Cleared
             </h1>
             <p className="text-xs text-slate-400 leading-relaxed">
-              We appreciate your business! A validation entry was updated inside the terminal core logs. 
+              We appreciate your business! A validation entry was updated inside the terminal core logs.
               A confirmation email was dispatched to:{' '}
               <span className="text-indigo-400 font-semibold block mt-1 break-all">
                 {session.customer_details?.email || 'your registered email'}
@@ -83,14 +83,14 @@ export default async function SuccessPage({ searchParams }) {
           </div>
 
           {/* ড্যাশবোর্ড অ্যাকশন বাটন */}
-          <Link 
-            href="/dashboard/reader" 
+          <Link
+            href="/dashboard/reader"
             className="inline-flex items-center justify-center gap-2 w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-indigo-600/15 cursor-pointer"
           >
             <LayoutCells className="w-4 h-4" />
             Enter Reader Workspace
           </Link>
-          
+
         </div>
       </section>
     );

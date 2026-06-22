@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   BookOpen, Bookmark, LayoutCells, Pencil, TrashBin,      
   Bars, Xmark, CircleCheck, Receipt, Trolley
@@ -18,33 +18,87 @@ export default function UserReaderDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const [deliveryHistory, setDeliveryHistory] = useState([]);
+  const [enrichedDeliveryHistory, setEnrichedDeliveryHistory] = useState([]);
+  const [enrichedReadingList, setEnrichedReadingList] = useState([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
-  // Reviews State
   const [reviews, setReviews] = useState([]);
   const [editingReviewId, setEditingReviewId] = useState(null);
   const [editText, setEditText] = useState('');
 
-  // Review Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBookForReview, setSelectedBookForReview] = useState(null);
   const [reviewComment, setReviewComment] = useState('');
 
-  const API_BASE_URL = 'http://localhost:5000';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-  // 1. Fetch User Orders
+  // 1. Fetch User Orders Base Request
+  const fetchUserOrders = useCallback(() => {
+    if (!user?.email) return;
+    setIsLoadingData(true);
+    fetch(`${API_BASE_URL}/api/orders/my-orders/${user.email}`)
+      .then((res) => res.ok ? res.json() : [])
+      .then((data) => setDeliveryHistory(data))
+      .catch((err) => console.error("Error tracking orders:", err))
+      .finally(() => setIsLoadingData(false));
+  }, [user?.email, API_BASE_URL]);
+
   useEffect(() => {
-    if (user?.email) {
-      setIsLoadingData(true);
-      fetch(`${API_BASE_URL}/api/orders/my-orders/${user.email}`)
-        .then((res) => res.ok ? res.json() : [])
-        .then((data) => setDeliveryHistory(data))
-        .catch((err) => console.error("Error tracking orders:", err))
-        .finally(() => setIsLoadingData(false));
-    }
-  }, [user?.email]);
+    fetchUserOrders();
+  }, [fetchUserOrders]);
 
-  // 2. Fetch User Reviews dynamically from backend
+  // Polling Mechanism to automatically sync when Librarian approves the status
+  useEffect(() => {
+    if (!user?.email) return;
+    const interval = setInterval(() => {
+      fetchUserOrders();
+    }, 8000); // Polls every 8 seconds for background pipeline pipeline sync
+    return () => clearInterval(interval);
+  }, [user?.email, fetchUserOrders]);
+
+  // 2. Enrich Data Engine Layer (Fixed Property Merging)
+  useEffect(() => {
+    const enrichOrders = async () => {
+      if (deliveryHistory.length === 0) {
+        setEnrichedDeliveryHistory([]);
+        setEnrichedReadingList([]);
+        return;
+      }
+
+      const enriched = await Promise.all(
+        deliveryHistory.map(async (order) => {
+          try {
+            // Priority check: Use order.bookId or backup asset identification code
+            const targetBookId = order.bookId || order.id || order._id;
+            if (!targetBookId) return order;
+
+            const res = await fetch(`${API_BASE_URL}/api/books/${targetBookId}`);
+            if (res.ok) {
+              const bookData = await res.json();
+              return { 
+                ...bookData,          
+                ...order,             
+                title: order.title || bookData.title, // Prevents falling back to empty fields
+                status: order.status   
+              };
+            }
+            return order;
+          } catch (err) {
+            console.error("Failed to enrich book:", err);
+            return order;
+          }
+        })
+      );
+
+      setEnrichedDeliveryHistory(enriched);
+      const delivered = enriched.filter(item => item.status === 'Delivered');
+      setEnrichedReadingList(delivered);
+    };
+
+    enrichOrders();
+  }, [deliveryHistory, API_BASE_URL]);
+
+  // 3. Fetch User Reviews
   useEffect(() => {
     if (user?.email) {
       fetch(`${API_BASE_URL}/api/reviews/user/${user.email}`)
@@ -52,21 +106,18 @@ export default function UserReaderDashboard() {
         .then((data) => setReviews(data))
         .catch((err) => console.error("Error fetching reviews:", err));
     }
-  }, [user?.email, activeTab]);
+  }, [user?.email, API_BASE_URL]);
 
-  const booksReadCount = deliveryHistory.filter(item => item.status === 'Delivered').length;
-  const pendingDeliveriesCount = deliveryHistory.filter(item => item.status !== 'Delivered').length;
-  const totalFeesSpent = deliveryHistory.reduce((acc, item) => acc + (item.fee || 0), 0);
-  
-  // Delivered status ashle system dynamic data read korbe
-  const readingList = deliveryHistory.filter(item => item.status === 'Delivered');
+  const booksReadCount = enrichedReadingList.length;
+  const pendingDeliveriesCount = enrichedDeliveryHistory.filter(item => item.status !== 'Delivered').length;
+  const totalFeesSpent = enrichedDeliveryHistory.reduce((acc, item) => acc + (item.fee || 0), 0);
 
-  const analyticalGraphData = deliveryHistory.map((item) => ({
+  const analyticalGraphData = enrichedDeliveryHistory.map((item) => ({
     id: item._id,
     percentage: Math.min(100, Math.max(20, ((item.fee || 0) / 5) * 100))
   }));
 
-  const filteredDeliveryHistory = deliveryHistory.filter(item =>
+  const filteredDeliveryHistory = enrichedDeliveryHistory.filter(item =>
     item.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -79,13 +130,12 @@ export default function UserReaderDashboard() {
     return `text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 border rounded-md ${formulas[status] || 'bg-white/5 text-white'}`;
   };
 
-  // Submit Review to Backend
   const handleSubmitReview = async (e) => {
     e.preventDefault();
-    if (!reviewComment.trim()) return;
+    if (!reviewComment.trim() || !selectedBookForReview) return;
 
     const payload = {
-      bookId: selectedBookForReview.id || selectedBookForReview._id || selectedBookForReview.bookId, 
+      bookId: selectedBookForReview.bookId || selectedBookForReview._id,
       bookTitle: selectedBookForReview.title,
       userEmail: user.email,
       userName: user.name || "Anonymous Reader",
@@ -99,16 +149,16 @@ export default function UserReaderDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+
       if (res.ok) {
         const data = await res.json();
-        // Server array data mapping checking optimization
         const newReview = data.review || data;
         setReviews([...reviews, newReview]);
         setIsModalOpen(false);
         setReviewComment('');
         alert('Review published successfully!');
       } else {
-        alert('Failed to publish review. Check backend console logs.');
+        alert('Failed to publish review.');
       }
     } catch (err) {
       console.error("Failed to submit review:", err);
@@ -197,6 +247,9 @@ export default function UserReaderDashboard() {
             </button>
             <h1 className="text-xl md:text-3xl font-black tracking-tight uppercase">Reader Workspace</h1>
           </div>
+          <div className="flex items-center gap-2">
+             <input type="text" placeholder="Search parameters..." value={searchQuery} onChange={(e)=>setSearchQuery(e.target.value)} className="bg-slate-900 border border-white/15 px-3 py-1.5 text-xs rounded-lg focus:outline-hidden focus:border-indigo-500 w-44 md:w-60"/>
+          </div>
         </div>
 
         {/* METRICS */}
@@ -245,9 +298,11 @@ export default function UserReaderDashboard() {
               <tbody className="divide-y divide-white/5">
                 {filteredDeliveryHistory.map((item) => (
                   <tr key={item._id} className="hover:bg-white/5">
-                    <td className="p-4 font-bold">{item.title}</td>
+                    <td className="p-4 font-bold">{item.title || "Unknown Book Node"}</td>
                     <td className="p-4">${item.fee?.toFixed(2)}</td>
-                    <td className="p-4 text-right"><span className={getStatusBadge(item.status)}>{item.status}</span></td>
+                    <td className="p-4 text-right">
+                      <span className={getStatusBadge(item.status)}>{item.status}</span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -255,24 +310,24 @@ export default function UserReaderDashboard() {
           </div>
         )}
 
-        {/* 📚 TAB FEATURE 3: DYNAMIC DOCK SYSTEM */}
+        {/* Reading List */}
         {activeTab === 'reading-list' && (
           <div>
             {isLoadingData ? (
               <div className="text-center text-xs text-slate-500 py-12">Fetching dynamic pipelines...</div>
-            ) : readingList.length === 0 ? (
+            ) : enrichedReadingList.length === 0 ? (
               <div className="text-center text-xs text-slate-500 py-12 border border-dashed border-white/5 rounded-2xl">
                 No active volumes found under your delivery pipeline.
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-                {readingList.map((book) => (
+                {enrichedReadingList.map((book) => (
                   <div key={book._id} className="bg-slate-900 border border-white/10 rounded-2xl p-5 flex flex-col justify-between hover:border-indigo-500/50 transition-all">
                     <div className="space-y-4">
                       <div className="w-full aspect-4/5 relative bg-slate-950 rounded-xl flex items-center justify-center overflow-hidden">
-                        {book.image || book.coverImage ? (
+                        {book.imageUrl || book.image || book.coverImage ? (
                           <Image 
-                            src={book.image || book.coverImage} 
+                            src={book.imageUrl || book.image || book.coverImage} 
                             alt={book.title || "Book Cover"} 
                             fill
                             className="object-cover"
@@ -301,10 +356,12 @@ export default function UserReaderDashboard() {
           </div>
         )}
 
-        {/* 📝 TAB FEATURE 4: SHOW SUBMITTED REVIEWS */}
+        {/* Reviews Tab */}
         {activeTab === 'reviews' && (
           <div className="space-y-4">
-            <h2 className="font-bold text-sm uppercase text-slate-300">My Ledger Reviews</h2>
+            <div className="flex justify-between items-center">
+               <h2 className="font-bold text-sm uppercase text-slate-300">My Ledger Reviews</h2>
+            </div>
             {reviews.length === 0 ? (
               <div className="text-center text-xs text-slate-500 py-12 border border-dashed border-white/5 rounded-2xl">
                 No submitted logs found inside your review ledger.
@@ -313,9 +370,15 @@ export default function UserReaderDashboard() {
               reviews.map((review) => (
                 <div key={review._id} className="bg-slate-900 border border-white/10 rounded-2xl p-5 flex justify-between items-start gap-4">
                   <div className="space-y-1 flex-1">
-                    <div className="flex items-center gap-3">
-                      <h4 className="font-bold text-sm text-white">{review.bookTitle}</h4>
-                      <span className="text-[10px] text-slate-500 font-mono">{review.date || new Date(review.createdAt).toLocaleDateString()}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <h4 className="font-bold text-sm text-white">{review.bookTitle}</h4>
+                        <span className="text-[10px] text-slate-500 font-mono">{review.date || new Date(review.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                         <button onClick={()=>handleStartEdit(review)} className="p-1 hover:text-indigo-400 transition-colors"><Pencil className="w-3.5 h-3.5"/></button>
+                         <button onClick={()=>handleDeleteReview(review._id)} className="p-1 hover:text-rose-400 transition-colors"><TrashBin className="w-3.5 h-3.5"/></button>
+                      </div>
                     </div>
                     {editingReviewId === review._id ? (
                       <div className="space-y-2 pt-1">
@@ -336,7 +399,7 @@ export default function UserReaderDashboard() {
         )}
       </main>
 
-      {/* 🧾 MODAL INTERFACE FOR WRITING REVIEW */}
+      {/* Review Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-white/10 rounded-2xl max-w-md w-full p-6 space-y-4">
