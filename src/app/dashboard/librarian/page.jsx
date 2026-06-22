@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  LayoutCells, CircleCheck, Trolley, Receipt, ShieldCheck, 
-  BookOpen, Plus, CirclePlus, TrashBin, Pencil, Bars, Xmark,Picture
+import {
+  LayoutCells, CircleCheck, Trolley, Receipt, ShieldCheck,
+  BookOpen, Plus, CirclePlus, TrashBin, Pencil, Bars, Xmark, Picture
 } from '@gravity-ui/icons';
 import Image from 'next/image';
 export default function LibrarianDashboard() {
@@ -60,7 +60,7 @@ export default function LibrarianDashboard() {
   const toggleBookStatus = async (bookId, currentStatus) => {
     if (currentStatus === 'Pending Approval') return; // Enforced constraint protection
     const nextStatus = currentStatus === 'Published' ? 'Unpublished' : 'Published';
-    
+
     try {
       const res = await fetch(`http://localhost:5000/api/books/${bookId}/visibility`, {
         method: 'PATCH',
@@ -78,13 +78,13 @@ export default function LibrarianDashboard() {
   const handleAddBookSubmit = async (e) => {
     e.preventDefault();
     if (!selectedFile) return alert("Please select a book cover thumbnail asset file.");
-    
+
     setIsSubmittingBook(true);
     try {
       // Step A: Upload file asset binary to imgBB API engine
       const imgFormData = new FormData();
       imgFormData.append('image', selectedFile);
-      
+
       // Using a sample fallback developer key if env configuration is absent
       const IMGBB_API_KEY = process.env.NEXT_PUBLIC_IMGBB_API_KEY || 'e7136009a2b53733c373a00b0ad8cdba';
       const imgBBRes = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
@@ -111,7 +111,7 @@ export default function LibrarianDashboard() {
       });
 
       if (!res.ok) throw new Error("Database reject ledger ingestion execution packet fault");
-      
+
       alert("Book logged into approval queue pipeline!");
       setFormData({ title: '', author: '', description: '', fee: '', category: '' });
       setSelectedFile(null);
@@ -137,7 +137,7 @@ export default function LibrarianDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex">
-      
+
       {/* Sidebar Control Interface */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-white/10 p-6 flex flex-col justify-between transform transition-transform duration-300 lg:translate-x-0 lg:static lg:h-screen ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="space-y-8">
@@ -179,7 +179,7 @@ export default function LibrarianDashboard() {
 
       {/* Main Workspace Frame */}
       <main className="flex-1 w-full min-w-0 p-6 md:p-10 space-y-8 overflow-y-auto max-w-[1600px] mx-auto">
-        
+
         {/* Dynamic Mobile Navbar Header Area */}
         <div className="flex items-center gap-4 border-b border-white/5 pb-6">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 bg-slate-900 border border-white/10 rounded-xl text-slate-400 hover:text-white">
@@ -250,28 +250,28 @@ export default function LibrarianDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-slate-400 font-semibold">Book Title Target</label>
-                  <input type="text" required value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white focus:outline-hidden focus:border-amber-500" placeholder="e.g. Clean Architecture Core" />
+                  <input type="text" required value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white focus:outline-hidden focus:border-amber-500" placeholder="e.g. Clean Architecture Core" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-slate-400 font-semibold">Author Authority Name</label>
-                  <input type="text" required value={formData.author} onChange={(e) => setFormData({...formData, author: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white focus:outline-hidden focus:border-amber-500" placeholder="e.g. Robert C. Martin" />
+                  <input type="text" required value={formData.author} onChange={(e) => setFormData({ ...formData, author: e.target.value })} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white focus:outline-hidden focus:border-amber-500" placeholder="e.g. Robert C. Martin" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-slate-400 font-semibold">System Delivery Access Fee (USD)</label>
-                  <input type="number" step="0.01" required value={formData.fee} onChange={(e) => setFormData({...formData, fee: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white focus:outline-hidden focus:border-amber-500" placeholder="5.00" />
+                  <input type="number" step="0.01" required value={formData.fee} onChange={(e) => setFormData({ ...formData, fee: e.target.value })} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white focus:outline-hidden focus:border-amber-500" placeholder="5.00" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-slate-400 font-semibold">Category Segment Class</label>
-                  <input type="text" required value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white focus:outline-hidden focus:border-amber-500" placeholder="e.g. Software Engineering" />
+                  <input type="text" required value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white focus:outline-hidden focus:border-amber-500" placeholder="e.g. Software Engineering" />
                 </div>
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-slate-400 font-semibold">Narrative Description Analysis</label>
-                <textarea required value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white focus:outline-hidden focus:border-amber-500" rows={4} placeholder="Summarize text parameters..." />
+                <textarea required value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full bg-slate-950 border border-white/10 rounded-xl p-3 text-white focus:outline-hidden focus:border-amber-500" rows={4} placeholder="Summarize text parameters..." />
               </div>
 
               <div className="space-y-1.5">
@@ -315,17 +315,16 @@ export default function LibrarianDashboard() {
                         <td className="p-4 font-bold text-white">{book.title}</td>
                         <td className="p-4 text-slate-400">{book.category}</td>
                         <td className="p-4">
-                          <span className={`px-2 py-0.5 text-[10px] border font-bold uppercase tracking-wider rounded-md ${
-                            book.status === 'Pending Approval' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                            book.status === 'Published' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                            'bg-slate-800 text-slate-400 border-white/5'
-                          }`}>
+                          <span className={`px-2 py-0.5 text-[10px] border font-bold uppercase tracking-wider rounded-md ${book.status === 'Pending Approval' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                              book.status === 'Published' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                'bg-slate-800 text-slate-400 border-white/5'
+                            }`}>
                             {book.status}
                           </span>
                         </td>
                         <td className="p-4 text-right space-x-2">
-                          <button 
-                            disabled={book.status === 'Pending Approval'} 
+                          <button
+                            disabled={book.status === 'Pending Approval'}
                             onClick={() => toggleBookStatus(book._id, book.status)}
                             className="px-3 py-1 bg-white/5 border border-white/5 hover:border-amber-500/30 font-bold text-[10px] uppercase tracking-wider rounded-md disabled:opacity-30 disabled:pointer-events-none transition-colors"
                           >
@@ -364,18 +363,19 @@ export default function LibrarianDashboard() {
                     {allOrders.map((order) => (
                       <tr key={order._id} className="hover:bg-white/2 transition-colors">
                         <td className="p-4 font-bold text-white">{order.userEmail}</td>
-                        <td className="p-4 text-slate-400">{order.title || "Catalog Volume Package"}</td>
+                        <td className="p-4 text-slate-400">
+                          {order.bookTitle || order.title || "Catalog Volume Package"}
+                        </td>
                         <td className="p-4">
-                          <span className={`px-2 py-0.5 text-[10px] border font-bold uppercase tracking-wider rounded-md ${
-                            order.status === 'Pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                            order.status === 'Dispatched' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                            'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                          }`}>
+                          <span className={`px-2 py-0.5 text-[10px] border font-bold uppercase tracking-wider rounded-md ${order.status === 'Pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                              order.status === 'Dispatched' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            }`}>
                             {order.status}
                           </span>
                         </td>
                         <td className="p-4 text-right space-x-2">
-                          {order.status === 'Pending' && ( 
+                          {order.status === 'Pending' && (
                             <button onClick={() => mutateOrderStatus(order._id, 'Dispatched')} className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[10px] uppercase tracking-wider rounded-md transition-all">
                               Approve & Dispatch
                             </button>
