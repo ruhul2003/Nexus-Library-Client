@@ -17,12 +17,16 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // রোল অনুযায়ী সঠিক ড্যাশবোর্ডে রিডাইরেক্ট করার হেল্পার ফাংশন
+  // রোল অনুযায়ী সঠিক ড্যাশবোর্ডে রিডাইরেক্ট করার হেল্পার ফাংশন
   const redirectBasedOnRole = (sessionData) => {
-    // Better Auth বা কাস্টম সেটআপে সাধারণত সেশন বা ইউজার অবজেক্টের ভেতর রোল থাকে
-    const role = sessionData?.user?.role || 'reader'; 
+    // Better Auth সেশন স্ট্রাকচার অনুযায়ী ইউজার অবজেক্ট থেকে রোল বের করা হচ্ছে
+    const rawRole = sessionData?.user?.role || 'reader';
+    const role = rawRole.toLowerCase(); 
     
-    if (role === 'librarian') {
+    // রোল ডিটেকশন এবং রেস্পেক্টিভ রাউটে রিডাইরেকশন 
+    if (role === 'admin') {
+      router.push('/dashboard/admin');
+    } else if (role === 'librarian') {
       router.push('/dashboard/librarian');
     } else {
       router.push('/dashboard/reader');
@@ -57,17 +61,14 @@ export default function LoginPage() {
       setIsLoading(true);
       setError(null);
       
-      // সোশ্যাল লগইনের ক্ষেত্রে callbackURL-এ একটি নির্দিষ্ট এপিআই বা মিডলওয়্যার রাউটে পাঠানো ভালো 
-      // যা ইউজারকে তার রোল অনুযায়ী রিডাইরেক্ট করবে। তবে সরাসরি ফ্রন্টএন্ড হ্যান্ডেল করতে চাইলে নিচের মতো করতে পারেন:
+      // সোশ্যাল লগইনের ক্ষেত্রে সরাসরি হার্ডকোডেড রাউটে না পাঠিয়ে 
+      // একটি ডেডিকেটেড অবজেক্টিভ কলব্যাক রাউটে পাঠানো হলো, যা রোল ডিটেক্ট করে রিডাইরেক্ট করবে
       await authClient.signIn.social({
         provider: "google",
-        // যদি আপনার মিডলওয়্যার বা ব্যাকএন্ডে স্বয়ংক্রিয় রিডাইরেক্ট পলিসি থাকে, তবে সেটি বেস্ট।
-        // অন্যথায় সাকসেসফুল ওঅথ ল্যান্ডিং পেজে রোল চেক করে রিডাইরেক্ট কোড যোগ করতে হবে।
-        callbackURL: '/dashboard/reader', 
+        callbackURL: '/auth-callback', 
       });
     } catch (err) {
       setError(err.message || "Social login failed.");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -211,6 +212,6 @@ export default function LoginPage() {
           </Link>
         </p>
       </div>
-    </div>
+    </div> 
   );
 }
