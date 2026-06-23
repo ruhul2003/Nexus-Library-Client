@@ -209,7 +209,7 @@ export default function BooksGridClient({ filteredBooks }) {
                     className="absolute inset-0 z-20 bg-linear-to-r from-transparent via-white/20 to-transparent pointer-events-none"
                   />
 
-                  {/* Image with parallax - FIXED: Added relative layout styling */}
+                  {/* Image with parallax - FIXED: Added absolute/relative validation rules and image object fallbacks */}
                   <motion.div
                     variants={imageVariants}
                     initial="hidden"
@@ -219,12 +219,14 @@ export default function BooksGridClient({ filteredBooks }) {
                     className="relative w-full h-full"
                   >
                     <Image
-                      src={book.coverImage}
-                      alt={book.title}
+                      // FIXED: Resolves empty string crash errors across structural schema variations
+                      src={book.image || book.coverImage || book.imageUrl || "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=400&auto=format&fit=crop"}
+                      alt={book.title || "Book Cover Asset"}
                       fill
                       sizes="(max-width: 1280px) 25vw, 20vw"
                       className="object-cover"
                       priority={index < 4}
+                      unoptimized // Bypasses optimization constraints for external imgBB delivery URLs
                     />
                   </motion.div>
 
@@ -328,7 +330,7 @@ export default function BooksGridClient({ filteredBooks }) {
                 >
                   <Link 
                     href={`/books/${book._id}`}
-                    className="flex-1 block bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-center text-white font-bold text-xs py-2.5 px-3 rounded-xl transition duration-200 active:scale-98 shadow-lg hover:shadow-indigo-500/50"
+                    className="flex-1 block bg-linear-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-center text-white font-bold text-xs py-2.5 px-3 rounded-xl transition duration-200 active:scale-98 shadow-lg hover:shadow-indigo-500/50"
                   >
                     View Details
                   </Link>

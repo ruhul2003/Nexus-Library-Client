@@ -1,10 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation'; 
 import { authClient } from '@/lib/auth-client';
-import { ArrowRightFromSquare } from '@gravity-ui/icons';
+import { ArrowRightFromSquare, Bars, Xmark } from '@gravity-ui/icons';
 import Image from 'next/image';
 
 const navLinks = [
@@ -18,10 +18,26 @@ const navLinks = [
 const NavBar = () => {
   const pathname = usePathname(); 
   const session = authClient.useSession();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const isLoggedIn = !!session?.data;
   const user = session?.data?.user;
 
-  const dashboardPath = user?.role === 'librarian' ? '/dashboard/librarian' : '/dashboard/reader';
+  // Dynamic role routing computed on every render block safely
+  const getDashboardPath = () => {
+    if (!user?.role) return '/dashboard/reader';
+    
+    switch (user.role.toLowerCase()) {
+      case 'admin':
+        return '/dashboard/admin';
+      case 'librarian':
+        return '/dashboard/librarian';
+      default:
+        return '/dashboard/reader';
+    }
+  };
+
+  const dashboardPath = getDashboardPath();
 
   const handleLogout = async () => {
     await authClient.signOut();
@@ -42,7 +58,7 @@ const NavBar = () => {
             </h1>
           </Link>
 
-          {/* Navigation Links */}
+          {/* Desktop Navigation Links */}
           <div className="hidden md:flex items-center gap-8 text-sm font-medium">
             {navLinks.map((link) => {
               const isActive = pathname === link.path;
@@ -63,10 +79,10 @@ const NavBar = () => {
             })}
           </div>
 
-          {/* Auth/Profile Section */}
-          <div className="flex items-center gap-5">
+          {/* Action / Auth Section */}
+          <div className="flex items-center gap-4">
             {isLoggedIn ? (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 md:gap-4">
                 <Link 
                   href={dashboardPath} 
                   className={`flex items-center gap-2 bg-white/5 hover:bg-white/10 border rounded-xl px-3 py-1.5 transition text-sm font-medium max-w-[160px] ${
@@ -75,23 +91,14 @@ const NavBar = () => {
                       : 'border-white/10 text-white'
                   }`}
                 >
-                  {user?.image ? (
-                    <Image 
-                      src={user.image} 
-                      alt={user?.name || "Profile"} 
-                      className="w-5 h-5 rounded-full object-cover border border-white/20"
-                      width={20}
-                      height={20}
-                    />
-                  ) : (
-                    <Image 
-                      src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop" 
-                      width={20}
-                      height={20}
-                      alt="avatar" 
-                      className="w-5 h-5 rounded-full object-cover border border-white/20"
-                    />
-                  )}
+                  <Image 
+                    src={user?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop"} 
+                    width={20}
+                    height={20}
+                    alt={user?.name || "Avatar"} 
+                    className="w-5 h-5 rounded-full object-cover border border-white/20"
+                    unoptimized
+                  />
                   <span className="truncate max-w-[90px]">
                     {user?.name || "Account"}
                   </span>
@@ -108,25 +115,73 @@ const NavBar = () => {
               </div>
             ) : (
               <>
-                <Link
-                  href="/auth/login"
-                  className="text-sm font-semibold text-slate-300 hover:text-white transition duration-200"
-                >
-                  Sign In
-                </Link>
-
-                <Link
-                  href="/auth/signup"
-                  className="bg-white hover:bg-slate-100 text-slate-950 text-sm font-semibold px-4 py-2.5 rounded-xl active:scale-[0.98] transition duration-200 shadow-md shadow-white/5"
-                >
-                  Get Started
-                </Link>
+                {/* Desktop Auth Actions */}
+                <div className="hidden md:flex items-center gap-5">
+                  <Link
+                    href="/auth/login"
+                    className="text-sm font-semibold text-slate-300 hover:text-white transition duration-200"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    className="bg-white hover:bg-slate-100 text-slate-950 text-sm font-semibold px-4 py-2.5 rounded-xl active:scale-[0.98] transition duration-200 shadow-md shadow-white/5"
+                  >
+                    Get Started
+                  </Link>
+                </div>
               </>
             )}
-          </div>
 
+            {/* Mobile Hamburger Control (Aligned Right) */}
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-slate-400 hover:text-white bg-white/5 border border-white/10 rounded-xl transition"
+            >
+              {mobileMenuOpen ? <Xmark className="w-5 h-5" /> : <Bars className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
       </nav>
+
+      {/* Mobile Overlay Menu Tray */}
+      {mobileMenuOpen && (
+        <div className="md:hidden mx-4 mt-2 max-w-7xl bg-slate-950/95 backdrop-blur-lg border border-white/10 rounded-2xl p-5 space-y-4 shadow-2xl transition-all animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="flex flex-col gap-3">
+            {navLinks.map((link) => (
+              <Link
+                key={link.path}
+                href={link.path}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`text-sm py-2 px-3 rounded-lg transition ${
+                  pathname === link.path ? 'bg-indigo-600/20 text-indigo-400 font-bold' : 'text-slate-300 hover:bg-white/5'
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+          </div>
+
+          {!isLoggedIn && (
+            <div className="pt-4 border-t border-white/5 flex flex-col gap-2">
+              <Link
+                href="/auth/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full text-center py-2.5 text-sm font-semibold text-slate-300 hover:text-white bg-white/5 rounded-xl transition"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/auth/signup"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full text-center py-2.5 text-sm font-semibold text-slate-950 bg-white rounded-xl transition"
+              >
+                Get Started
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
     </header>
   );
 };

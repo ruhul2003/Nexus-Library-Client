@@ -45,7 +45,7 @@ export default function FeaturedClient({ featuredBooks }) {
   };
 
   return (
-    <motion.section 
+    <motion.section
       className="w-full space-y-8 py-4"
       initial="hidden"
       animate="visible"
@@ -54,7 +54,7 @@ export default function FeaturedClient({ featuredBooks }) {
       {/* Grid Headers Context */}
       <motion.div className="flex items-end justify-between border-b border-white/5 pb-4" variants={headerVariants}>
         <div>
-          <motion.span 
+          <motion.span
             className="text-xs font-bold uppercase tracking-widest text-indigo-400"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -62,7 +62,7 @@ export default function FeaturedClient({ featuredBooks }) {
           >
             Curated Matrix
           </motion.span>
-          <motion.h2 
+          <motion.h2
             className="text-xl md:text-2xl font-black tracking-tight text-white mt-1"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -77,7 +77,7 @@ export default function FeaturedClient({ featuredBooks }) {
           transition={{ duration: 0.5, delay: 0.3 }}
         >
           <Link href="/books" className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition group">
-            View All Catalog 
+            View All Catalog
             <motion.div animate={{ x: [0, 5, 0] }} transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}>
               <ArrowRight className="w-3.5 h-3.5" />
             </motion.div>
@@ -88,7 +88,7 @@ export default function FeaturedClient({ featuredBooks }) {
       {/* 3-Column Content Flex Row */}
       <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" variants={containerVariants}>
         {featuredBooks.map((book, index) => (
-          <motion.div 
+          <motion.div
             key={book.id || book._id}
             className="group relative bg-slate-900/20 hover:bg-slate-900/40 border border-white/10 hover:border-white/20 rounded-2xl p-4 flex flex-col justify-between transition-all duration-300 shadow-xl backdrop-blur-xs"
             variants={cardVariants}
@@ -97,14 +97,17 @@ export default function FeaturedClient({ featuredBooks }) {
           >
             <div>
               {/* Image Frame Block */}
+              {/* Image Frame Block */}
               <motion.div className="relative w-full aspect-4/5 rounded-xl overflow-hidden bg-slate-950 border border-white/5 mb-4" whileHover={{ scale: 1.02 }} transition={{ duration: 0.4 }}>
                 <motion.div initial={{ scale: 1.1, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.6, delay: index * 0.1 }} className="w-full h-full">
                   <Image
-                    src={book.coverImage}
-                    alt={book.title}
+                    // Check all potential image keys returned across your MongoDB entries
+                    src={book.image || book.coverImage || book.imageUrl || "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=400&auto=format&fit=crop"}
+                    alt={book.title || "Book Cover"}
                     fill
                     sizes="(max-width: 7xl) 33vw"
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    unoptimized // Add this parameter to safely load external imgBB links without domain whitelisting crashes
                   />
                 </motion.div>
                 <motion.div className="absolute top-2.5 right-2.5 z-10" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: index * 0.1 + 0.3 }}>

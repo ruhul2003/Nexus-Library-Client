@@ -75,9 +75,14 @@ export default function LibrarianDashboard() {
   };
 
   // 4. Handle Book Form Submission with external imgBB API upload
+// 4. Handle Book Form Submission with external imgBB API upload
   const handleAddBookSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedFile) return alert("Please select a book cover thumbnail asset file.");
+    
+    // Safety check: Validate the binary asset file is ready
+    if (!selectedFile) {
+      return alert("Please select a book cover thumbnail asset file.");
+    }
 
     setIsSubmittingBook(true);
     try {
@@ -85,24 +90,36 @@ export default function LibrarianDashboard() {
       const imgFormData = new FormData();
       imgFormData.append('image', selectedFile);
 
-      // Using a sample fallback developer key if env configuration is absent
       const IMGBB_API_KEY = process.env.NEXT_PUBLIC_IMGBB_API_KEY || 'e7136009a2b53733c373a00b0ad8cdba';
       const imgBBRes = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
         method: 'POST',
         body: imgFormData
       });
+      
       const imgBBData = await imgBBRes.json();
-      if (!imgBBData.success) throw new Error("Asset hosting pipeline verification failure");
+      
+      // Safety check: Check if imgBB hosted the URL successfully 
+      if (!imgBBData.success || !imgBBData.data?.url) {
+        throw new Error("Asset hosting pipeline verification failure - Image URL missing.");
+      }
 
       const uploadedImageUrl = imgBBData.data.url;
 
-      // Step B: Post metadata back into database system control parameters
+      // Step B: Explicitly assemble payload fields to prevent empty string overrides
       const bookPayload = {
-        ...formData,
+        title: formData.title.trim(),
+        author: formData.author.trim(),
+        description: formData.description.trim(),
+        category: formData.category.trim(),
         fee: parseFloat(formData.fee) || 0,
-        imageUrl: uploadedImageUrl,
-        status: 'Pending Approval' // System restriction requirement configuration rule
+        image: uploadedImageUrl, // Explicit assignment
+        status: 'Pending Approval'
       };
+
+      // Safety check: Final firewall verification against empty string src injection
+      if (!bookPayload.image || bookPayload.image === "") {
+        throw new Error("Payload aborted: Image field resolved to an empty string.");
+      }
 
       const res = await fetch('http://localhost:5000/api/books', {
         method: 'POST',
@@ -110,21 +127,27 @@ export default function LibrarianDashboard() {
         body: JSON.stringify(bookPayload)
       });
 
-      if (!res.ok) throw new Error("Database reject ledger ingestion execution packet fault");
+      if (!res.ok) {
+        throw new Error(`Database rejected ledger ingestion. Status: ${res.status}`);
+      }
 
       alert("Book logged into approval queue pipeline!");
+      
+      // Step C: Reset states cleanly
       setFormData({ title: '', author: '', description: '', fee: '', category: '' });
       setSelectedFile(null);
+      
+      // Refresh local states and return to inventory view
       fetchLibrarianLogs();
       setActiveTab('inventory');
+      
     } catch (err) {
-      console.error(err);
-      alert("Add book system channel encountered an operational error.");
+      console.error("Operational pipeline error:", err);
+      alert(`Add book error: ${err.message || "Internal system channel failure."}`);
     } finally {
       setIsSubmittingBook(false);
     }
   };
-
   // Derived Aggregate Calculation Dash metrics
   const totalBooksListed = inventory.length;
   const totalEarnings = allOrders.reduce((acc, item) => acc + (item.fee || 0), 0);
