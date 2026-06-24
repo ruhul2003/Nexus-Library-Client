@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   LayoutCells, ShieldCheck, BookOpen, TrashBin, 
-  Bars, Xmark, Persons, CirclePlus, PersonXmark 
+  Bars, Xmark, Persons, CirclePlus, PersonXmark,
+  CircleCheck // ট্রানজেকশনের জন্য আইকন (অথবা আপনার পছন্দের যেকোনো আইকন)
 } from '@gravity-ui/icons';
 
 export default function AdminDashboard() {
@@ -16,6 +17,7 @@ export default function AdminDashboard() {
   // Core Matrix States
   const [allBooks, setAllBooks] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
+  const [allTransactions, setAllTransactions] = useState([]); // 🌟 New State
 
   // Live DB Authorization States
   const [adminUser, setAdminUser] = useState(null);
@@ -25,8 +27,6 @@ export default function AdminDashboard() {
   useEffect(() => {
     const verifyDatabaseRole = async () => {
       try {
-        // Change this email string dynamically if tying into an external 
-        // global Auth state context later, or keep as your seed admin email.
         const activeAuthEmail = "admin@gmail.com"; 
 
         if (!activeAuthEmail) {
@@ -34,11 +34,9 @@ export default function AdminDashboard() {
           return;
         }
 
-        // Fetch live validation parameter options straight from MongoDB user schema
         const res = await fetch(`http://localhost:5000/api/users/${activeAuthEmail}`);
         if (res.ok) {
           const dbUserData = await res.json();
-          console.log("Database Verified Core Credentials:", dbUserData);
           setAdminUser(dbUserData);
         } else {
           setAdminUser(null);
@@ -69,6 +67,13 @@ export default function AdminDashboard() {
         const usersData = await usersRes.json();
         setAllUsers(usersData);
       }
+
+      // 🌟 Fetch Transactions from Backend Ledger
+      const txRes = await fetch('http://localhost:5000/api/admin/transactions');
+      if (txRes.ok) {
+        const txData = await txRes.json();
+        setAllTransactions(txData);
+      }
     } catch (err) {
       console.error("System asset sync error:", err);
     } finally {
@@ -76,7 +81,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // Trigger metrics reload only if the authenticated account matches the required role
   useEffect(() => {
     if (adminUser && adminUser.role === 'admin') {
       fetchAdminData();
@@ -147,7 +151,6 @@ export default function AdminDashboard() {
   const totalLibrarians = allUsers.filter(u => u.role === 'librarian').length;
   const totalReaders = allUsers.filter(u => u.role === 'reader' || !u.role).length;
 
-  // Render Gatekeepers
   if (isAuthLoading) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
@@ -199,6 +202,7 @@ export default function AdminDashboard() {
               { id: 'overview', name: 'Overview Console', icon: LayoutCells },
               { id: 'manage-books', name: 'Manage Book Logs', icon: BookOpen },
               { id: 'manage-users', name: 'User Management', icon: Persons },
+              { id: 'transactions', name: 'View All Transactions', icon: CircleCheck }, // 🌟 New Tab Addition
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -273,7 +277,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* TAB 2: MANAGE BOOKS MATRIX (APPROVAL, EDIT, DELETE) */}
+        {/* TAB 2: MANAGE BOOKS MATRIX */}
         {activeTab === 'manage-books' && (
           <div className="bg-slate-900/50 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
             <div className="p-5 border-b border-white/5 bg-slate-900">
@@ -325,7 +329,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* TAB 3: USER ACCOUNT MATRIX (ROLE PROMOTION & ACCOUNT PURGE) */}
+        {/* TAB 3: USER ACCOUNT MATRIX */}
         {activeTab === 'manage-users' && (
           <div className="bg-slate-900/50 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
             <div className="p-5 border-b border-white/5 bg-slate-900">
@@ -365,6 +369,49 @@ export default function AdminDashboard() {
                           <button onClick={() => handleDeleteUser(user._id)} className="px-2.5 py-1 bg-white/5 border border-white/5 hover:border-red-500 text-red-500 font-bold text-[10px] uppercase tracking-wider rounded-md transition-all">
                             <PersonXmark className="w-3.5 h-3.5 inline" /> Purge Account
                           </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* 🌟 TAB 4: VIEW ALL TRANSACTIONS MATRIX (NEW SECTION) */}
+        {activeTab === 'transactions' && (
+          <div className="bg-slate-900/50 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+            <div className="p-5 border-b border-white/5 bg-slate-900">
+              <h2 className="font-bold text-xs uppercase tracking-wider text-slate-300">Central System Financial Ledger</h2>
+            </div>
+            <div className="overflow-x-auto text-xs">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10 text-slate-400 font-semibold bg-white/5">
+                    <th className="p-4">Transaction ID</th>
+                    <th className="p-4">User Email</th>
+                    <th className="p-4">Librarian Email</th>
+                    <th className="p-4">Amount ($)</th>
+                    <th className="p-4">Date & Time</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {isLoading ? (
+                    <tr><td colSpan="5" className="p-4 text-center font-mono text-slate-500">Retrieving secure transaction history...</td></tr>
+                  ) : allTransactions.length === 0 ? (
+                    <tr><td colSpan="5" className="p-4 text-center font-mono text-slate-500">No transaction logs captured in the registry.</td></tr>
+                  ) : (
+                    allTransactions.map((tx) => (
+                      <tr key={tx._id || tx.transactionId} className="hover:bg-white/2 transition-colors">
+                        <td className="p-4 font-mono text-indigo-400 font-semibold">{tx.transactionId || tx._id}</td>
+                        <td className="p-4 text-white font-mono">{tx.userEmail || 'N/A'}</td>
+                        <td className="p-4 text-slate-400 font-mono">{tx.librarianEmail || 'System / None'}</td>
+                        <td className="p-4 text-emerald-400 font-bold">
+                          ${parseFloat(tx.amount).toFixed(2)}
+                        </td>
+                        <td className="p-4 text-slate-400">
+                          {tx.createdAt ? new Date(tx.createdAt).toLocaleString() : 'Recent'}
                         </td>
                       </tr>
                     ))
