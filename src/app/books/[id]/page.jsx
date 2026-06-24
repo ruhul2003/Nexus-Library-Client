@@ -14,11 +14,15 @@ const BookDetailsPage = async ({ params }) => {
   let reviews = [];
   let error = null;
 
-  let isLibrarian = false;
+  let hasPrivilegedAccess = false; // Librarian অথবা Admin উভয়ের জন্য ফ্ল্যাগ
+  
   try {
     const session = await auth.api.getSession({ headers: await headers() });
-    if (session?.user?.role === 'librarian') {
-      isLibrarian = true;
+    const userRole = session?.user?.role?.toLowerCase();
+    
+    // 🌟 Admin অথবা Librarian হলে প্রিভিলেজড অ্যাক্সেস ট্রু হবে
+    if (userRole === 'librarian' || userRole === 'admin') {
+      hasPrivilegedAccess = true;
     }
   } catch (authErr) {
     console.error("Auth session fetch failed:", authErr);
@@ -119,7 +123,8 @@ const BookDetailsPage = async ({ params }) => {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start">
         <div className="md:col-span-5 lg:col-span-4">
           <div className="relative aspect-4/5 w-full rounded-3xl overflow-hidden bg-slate-950 border border-white/10 shadow-2xl">
-            <Image src={book.imageUrl || book.coverImage || '/images/book-placeholder.jpg'} alt={book.title} fill priority sizes="(max-width: 768px) 100vw, 400px" className="object-cover" />
+            {/* MongoDB এর image অথবা imageUrl প্যারামিটার ডাইনামিকলি ক্যাচ করার হ্যান্ডলার */}
+            <Image src={book.image || book.imageUrl || book.coverImage || '/images/book-placeholder.jpg'} alt={book.title} fill priority sizes="(max-width: 768px) 100vw, 400px" className="object-cover" unoptimized />
           </div>
         </div>
 
@@ -159,7 +164,8 @@ const BookDetailsPage = async ({ params }) => {
           </div>
 
           <div className="pt-6">
-            {isLibrarian ? (
+            {/* 🌟 এখানে কন্ডিশন পরিবর্তন করা হয়েছে: Admin অথবা Librarian হলে ম্যানেজমেন্ট বাটনগুলো দেখতে পাবেন */}
+            {hasPrivilegedAccess ? (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
                 <Link href={`/books/${book._id}/edit`} className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl text-sm shadow-lg"><PencilToSquare className="w-4 h-4" /> Edit Asset</Link>
                 <form action={handleUnpublish} className="w-full"><button type="submit" className="w-full inline-flex items-center justify-center gap-2 bg-amber-600/20 border border-amber-500/30 text-amber-400 font-bold py-4 rounded-2xl text-sm"><EyeSlash className="w-4 h-4" /> Unpublish</button></form>
@@ -193,10 +199,10 @@ const BookDetailsPage = async ({ params }) => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center font-bold text-xs text-indigo-400">
-                      {rev.userName[0].toUpperCase()}
+                      {rev.userName ? rev.userName[0].toUpperCase() : "U"}
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-200">{rev.userName}</h4>
+                      <h4 className="text-xs font-bold text-slate-200">{rev.userName || "Anonymous"}</h4>
                       <p className="text-[10px] text-slate-500">{rev.userEmail}</p>
                     </div>
                   </div>

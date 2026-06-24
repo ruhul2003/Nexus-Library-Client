@@ -16,14 +16,10 @@ export default function LoginPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  // রোল অনুযায়ী সঠিক ড্যাশবোর্ডে রিডাইরেক্ট করার হেল্পার ফাংশন
   const redirectBasedOnRole = (sessionData) => {
-    // Better Auth সেশন স্ট্রাকচার অনুযায়ী ইউজার অবজেক্ট থেকে রোল বের করা হচ্ছে
     const rawRole = sessionData?.user?.role || 'reader';
     const role = rawRole.toLowerCase(); 
     
-    // রোল ডিটেকশন এবং রেস্পেক্টিভ রাউটে রিডাইরেকশন 
     if (role === 'admin') {
       router.push('/dashboard/admin');
     } else if (role === 'librarian') {
@@ -47,7 +43,6 @@ export default function LoginPage() {
 
       if (authError) throw authError;
 
-      // সফল লগইনের পর প্রাপ্ত সেশন ডেটা থেকে রোল চেক করছি
       redirectBasedOnRole(data);
     } catch (err) {
       setError(err.message || "Invalid credentials. Please try again.");
@@ -61,8 +56,6 @@ export default function LoginPage() {
       setIsLoading(true);
       setError(null);
       
-      // সোশ্যাল লগইনের ক্ষেত্রে সরাসরি হার্ডকোডেড রাউটে না পাঠিয়ে 
-      // একটি ডেডিকেটেড অবজেক্টিভ কলব্যাক রাউটে পাঠানো হলো, যা রোল ডিটেক্ট করে রিডাইরেক্ট করবে
       await authClient.signIn.social({
         provider: "google",
         callbackURL: '/auth-callback', 

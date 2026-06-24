@@ -27,18 +27,24 @@ export default function EditBookPage() {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-  // 🔒 SECURITY GUARDRAIL: Client-Side Session Check for Librarian
+  // 🔒 SECURITY GUARDRAIL: Client-Side Session Check for Librarian & Admin
   useEffect(() => {
-    const checkLibrarianAuth = async () => {
+    const checkAuth = async () => {
       try {
-        // Better Auth ক্লায়েন্ট রাউট সেশন বা কাস্টম সেশন মেকানিজম চেক
-        const res = await fetch('/api/auth/get-session'); // অথবা আপনার Better Auth-এর সেশন রুট
+        const res = await fetch('/api/auth/get-session'); 
         if (res.ok) {
           const session = await res.json();
-          if (session?.user?.role !== 'librarian') {
-            router.replace(`/books/${id}`); // লাইব্রেরিয়ান না হলে ডিটেইলস পেজে রিডাইরেক্ট
+          const userRole = session?.user?.role?.toLowerCase();
+
+          // 🌟 লজিক আপডেট: ইউজার যদি librarian বা admin কোনোটিই না হয়, তবেই রিডাইরেক্ট হবে
+          if (userRole !== 'librarian' && userRole !== 'admin') {
+            router.replace(`/books/${id}`); 
             return;
           }
+        } else {
+          // সেশন রেসপন্স ওকে না হলে (লগইন না থাকলে) লগইন পেজে পাঠান
+          router.replace('/login');
+          return;
         }
       } catch (err) {
         console.error("Security check failed:", err);
@@ -47,10 +53,10 @@ export default function EditBookPage() {
       }
     };
 
-    checkLibrarianAuth();
+    checkAuth();
   }, [id, router]);
 
-  // পেজ লোড হওয়ার সাথে সাথে বইয়ের ডাটাবেজ রেকর্ড ফেচ করা
+  // পেজ লোড হওয়ার সাথে সাথে বইয়ের ডাটাবেজ রেকর্ড ফেচ করা
   useEffect(() => {
     const fetchBookDetails = async () => {
       if (authChecking) return;
