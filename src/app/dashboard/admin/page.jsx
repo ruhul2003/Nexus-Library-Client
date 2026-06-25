@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { 
   LayoutCells, ShieldCheck, BookOpen, TrashBin, 
   Bars, Xmark, Persons, CirclePlus, PersonXmark,
-  CircleCheck // ট্রানজেকশনের জন্য আইকন (অথবা আপনার পছন্দের যেকোনো আইকন)
+  CircleCheck 
 } from '@gravity-ui/icons';
 
 export default function AdminDashboard() {
@@ -14,16 +14,13 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Core Matrix States
   const [allBooks, setAllBooks] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
-  const [allTransactions, setAllTransactions] = useState([]); // 🌟 New State
+  const [allTransactions, setAllTransactions] = useState([]);
 
-  // Live DB Authorization States
   const [adminUser, setAdminUser] = useState(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
-  // 1. Live Database Authorization Pipeline
   useEffect(() => {
     const verifyDatabaseRole = async () => {
       try {
@@ -52,7 +49,6 @@ export default function AdminDashboard() {
     verifyDatabaseRole();
   }, []);
 
-  // 2. Core Operational Data Sync Panel Fetcher
   const fetchAdminData = async () => {
     setIsLoading(true);
     try {
@@ -68,7 +64,6 @@ export default function AdminDashboard() {
         setAllUsers(usersData);
       }
 
-      // 🌟 Fetch Transactions from Backend Ledger
       const txRes = await fetch('http://localhost:5000/api/admin/transactions');
       if (txRes.ok) {
         const txData = await txRes.json();
@@ -87,7 +82,6 @@ export default function AdminDashboard() {
     }
   }, [adminUser]);
 
-  // 3. Control Pipeline Actions (Books Mutators)
   const handleApprovePublish = async (bookId) => {
     try {
       const res = await fetch(`http://localhost:5000/api/admin/books/${bookId}/approve`, {
@@ -116,7 +110,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // 4. Control Pipeline Actions (User Management Mutators)
   const handleMakeAdmin = async (userId) => {
     try {
       const res = await fetch(`http://localhost:5000/api/admin/users/${userId}/role`, {
@@ -145,7 +138,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // Derived Metrics Calculations
   const totalBooks = allBooks.length;
   const pendingApprovals = allBooks.filter(b => b.status === 'Pending Approval').length;
   const totalLibrarians = allUsers.filter(u => u.role === 'librarian').length;
@@ -189,7 +181,7 @@ export default function AdminDashboard() {
               <div className="w-9 h-9 rounded-xl bg-red-500 flex items-center justify-center font-black text-black shadow-md">A</div>
               <div>
                 <h2 className="font-black tracking-tight text-sm uppercase">Admin Panel</h2>
-                <p className="text-[10px] font-bold tracking-wider text-red-500 uppercase">Live DB Verified</p>
+                <p className="text-xs text-slate-400">Welcome, {adminUser.name}</p>
               </div>
             </div>
             <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1 text-slate-400 hover:text-white">
@@ -202,7 +194,7 @@ export default function AdminDashboard() {
               { id: 'overview', name: 'Overview Console', icon: LayoutCells },
               { id: 'manage-books', name: 'Manage Book Logs', icon: BookOpen },
               { id: 'manage-users', name: 'User Management', icon: Persons },
-              { id: 'transactions', name: 'View All Transactions', icon: CircleCheck }, // 🌟 New Tab Addition
+              { id: 'transactions', name: 'View All Transactions', icon: CircleCheck },
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -220,10 +212,8 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* Main Workspace Terminal */}
       <main className="flex-1 w-full min-w-0 p-6 md:p-10 space-y-8 overflow-y-auto max-w-[1600px] mx-auto">
         
-        {/* Dynamic Header */}
         <div className="flex items-center gap-4 border-b border-white/5 pb-6">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 bg-slate-900 border border-white/10 rounded-xl text-slate-400">
             <Bars className="w-5 h-5" />
@@ -233,7 +223,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Global Overview Information Metrics Card Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">
           <div className="bg-slate-900 border border-white/10 p-5 rounded-2xl flex items-center gap-4">
             <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400"><BookOpen className="w-5 h-5"/></div>
@@ -268,7 +257,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* TAB 1: OVERVIEW METRIC DECORATION */}
         {activeTab === 'overview' && (
           <div className="bg-slate-900/40 border border-white/10 rounded-2xl p-6 text-center py-12">
             <ShieldCheck className="w-12 h-12 text-red-500 mx-auto mb-4 animate-pulse" />
@@ -277,7 +265,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* TAB 2: MANAGE BOOKS MATRIX */}
         {activeTab === 'manage-books' && (
           <div className="bg-slate-900/50 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
             <div className="p-5 border-b border-white/5 bg-slate-900">
@@ -329,7 +316,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* TAB 3: USER ACCOUNT MATRIX */}
         {activeTab === 'manage-users' && (
           <div className="bg-slate-900/50 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
             <div className="p-5 border-b border-white/5 bg-slate-900">
@@ -379,7 +365,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* 🌟 TAB 4: VIEW ALL TRANSACTIONS MATRIX (NEW SECTION) */}
         {activeTab === 'transactions' && (
           <div className="bg-slate-900/50 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
             <div className="p-5 border-b border-white/5 bg-slate-900">

@@ -133,11 +133,9 @@ export default function LibrarianDashboard() {
 
       alert("Book logged into approval queue pipeline!");
       
-      // Step C: Reset states cleanly
       setFormData({ title: '', author: '', description: '', fee: '', category: '' });
       setSelectedFile(null);
       
-      // Refresh local states and return to inventory view
       fetchLibrarianLogs();
       setActiveTab('inventory');
       
@@ -148,7 +146,6 @@ export default function LibrarianDashboard() {
       setIsSubmittingBook(false);
     }
   };
-  // Derived Aggregate Calculation Dash metrics
   const totalBooksListed = inventory.length;
   const totalEarnings = allOrders.reduce((acc, item) => acc + (item.fee || 0), 0);
   const activePendingRequests = allOrders.filter(o => o.status === 'Pending').length;
@@ -161,7 +158,6 @@ export default function LibrarianDashboard() {
   return (
     <div className="min-h-screen bg-slate-950 text-white flex">
 
-      {/* Sidebar Control Interface */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-white/10 p-6 flex flex-col justify-between transform transition-transform duration-300 lg:translate-x-0 lg:static lg:h-screen ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="space-y-8">
           <div className="flex items-center justify-between">
