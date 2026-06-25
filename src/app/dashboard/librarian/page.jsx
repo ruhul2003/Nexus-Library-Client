@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import {
   LayoutCells, CircleCheck, Trolley, Receipt, ShieldCheck,
   BookOpen, Plus, CirclePlus, TrashBin, Pencil, Bars, Xmark, Picture
@@ -12,6 +13,7 @@ export default function LibrarianDashboard() {
   const [allOrders, setAllOrders] = useState([]);
   const [inventory, setInventory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
 
   // Add Book Form State Matrix
   const [formData, setFormData] = useState({
@@ -81,7 +83,7 @@ export default function LibrarianDashboard() {
     
     // Safety check: Validate the binary asset file is ready
     if (!selectedFile) {
-      return alert("Please select a book cover thumbnail asset file.");
+      return toast.error("Please select a book cover thumbnail asset file.");
     }
 
     setIsSubmittingBook(true);
@@ -131,7 +133,7 @@ export default function LibrarianDashboard() {
         throw new Error(`Database rejected ledger ingestion. Status: ${res.status}`);
       }
 
-      alert("Book logged into approval queue pipeline!");
+      toast.success("Book logged into approval queue pipeline!");
       
       setFormData({ title: '', author: '', description: '', fee: '', category: '' });
       setSelectedFile(null);
@@ -141,7 +143,7 @@ export default function LibrarianDashboard() {
       
     } catch (err) {
       console.error("Operational pipeline error:", err);
-      alert(`Add book error: ${err.message || "Internal system channel failure."}`);
+      toast.error(`Add book error: ${err.message || "Internal system channel failure."}`);
     } finally {
       setIsSubmittingBook(false);
     }

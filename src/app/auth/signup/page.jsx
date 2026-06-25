@@ -7,6 +7,7 @@ import { Envelope, Lock, ArrowRight, BookOpen, Person, Camera } from '@gravity-u
 import { authClient } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image'; 
+import { toast } from 'react-hot-toast';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -64,7 +65,7 @@ export default function SignupPage() {
         callbackURL: '/auth/login',
       });
 
-      alert(`Signed up successfully with ${email}!`);
+    toast.success(`Signed up successfully with ${email}!`);
       router.push('/auth/login');
     } catch (err) {
       setError(err.message || "An error occurred during signup.");

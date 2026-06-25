@@ -53,7 +53,7 @@ const BookDetailsPage = async ({ params }) => {
   async function handleCheckout() {
     'use server';
     const session = await auth.api.getSession({ headers: await headers() });
-    if (!session) redirect('/login');
+    if (!session) redirect('/auth/login');
 
     const targetUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     const finalPrice = book?.price || book?.fee || 0;

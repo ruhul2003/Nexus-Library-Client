@@ -7,6 +7,7 @@ import {
 } from '@gravity-ui/icons';
 import { authClient } from '@/lib/auth-client';
 import Image from 'next/image';
+import { toast} from 'react-hot-toast';
 
 export default function UserReaderDashboard() {
   const sessionQuery = authClient.useSession();
@@ -168,9 +169,9 @@ export default function UserReaderDashboard() {
         setReviews([...reviews, newReview]);
         setIsModalOpen(false);
         setReviewComment('');
-        alert('Review published successfully!');
+        toast.success('Review published successfully!');
       } else {
-        alert('Failed to publish review.');
+        toast.error('Failed to publish review.');
       }
     } catch (err) {
       console.error("Failed to submit review:", err);

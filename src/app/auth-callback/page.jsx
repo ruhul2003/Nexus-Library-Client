@@ -17,7 +17,7 @@ export default function AuthCallbackPage() {
         if (error || !session) {
           console.error("Auth session sync error:", error);
           setStatusMessage("Authentication failed. Redirecting to login...");
-          setTimeout(() => router.push('/login'), 1500);
+          setTimeout(() => router.push('/auth/login'), 1500);
           return;
         }
 
@@ -37,7 +37,7 @@ export default function AuthCallbackPage() {
         router.refresh();
       } catch (err) {
         console.error("Callback runtime exception:", err);
-        router.push('/login');
+        router.push('/auth/login');
       }
     };
 

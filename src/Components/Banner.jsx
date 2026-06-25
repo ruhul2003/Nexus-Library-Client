@@ -36,7 +36,6 @@ const slides = [
 const ReaderBanner = () => {
   const [current, setCurrent] = useState(0);
   
-  // Cleaned up syntax error and placed hook inside the component layout
   const session = authClient.useSession();
   const isLoggedIn = !!session?.data;
 
@@ -48,7 +47,6 @@ const ReaderBanner = () => {
     setCurrent((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
   };
 
-  // Adjusted slider ticking mechanism to swipe every 10 seconds (10000ms)
   useEffect(() => {
     const slideTimer = setInterval(nextSlide, 10000);
     return () => clearInterval(slideTimer);
@@ -57,7 +55,7 @@ const ReaderBanner = () => {
   return (
     <div className="relative w-full h-[80vh] min-h-[500px] md:h-[85vh] rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-slate-950 group">
 
-      {/* 1. Interactive Slides Container */}
+      {/* 🖼️ SLIDER IMAGES & CONTENT LOOP */}
       {slides.map((slide, index) => (
         <div
           key={slide.id}
@@ -65,7 +63,6 @@ const ReaderBanner = () => {
             index === current ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-105 pointer-events-none'
           }`}
         >
-          {/* Background Image Layer */}
           <Image
             src={slide.image}
             alt={slide.title}
@@ -75,14 +72,10 @@ const ReaderBanner = () => {
             className="object-cover select-none"
           />
 
-          {/* Premium Multi-Layer Dark Vignette Gradients */}
           <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-950/70 to-slate-900/40" />
           <div className="absolute inset-0 bg-linear-to-r from-slate-950 via-slate-950/20 to-slate-950/20" />
 
-          {/* Centered Descriptive Context Content Block */}
-          <div className="absolute inset-0 flex flex-col justify-center items-center text-center px-6 sm:px-12 max-w-4xl mx-auto space-y-4 md:space-y-6 z-10">
-
-            {/* The Dynamic Website Slogan on top */}
+          <div className="absolute inset-0 flex flex-col justify-center items-center text-center px-6 sm:px-12 max-w-4xl mx-auto space-y-4 md:space-y-6 z-20">
             <div className="space-y-2">
               <span className="text-[11px] md:text-xs font-bold uppercase tracking-widest text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-full inline-flex items-center gap-1.5">
                 <BookOpen className="w-3 h-3 text-indigo-400" />
@@ -90,17 +83,14 @@ const ReaderBanner = () => {
               </span>
             </div>
 
-            {/* Slide Title Header */}
             <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-white leading-tight max-w-3xl">
               {slide.title}
             </h1>
 
-            {/* Supporting Pitch text */}
             <p className="text-slate-300 text-sm md:text-lg leading-relaxed max-w-2xl">
               {slide.description}
             </p>
 
-            {/* Attrition/Value Accent Tags */}
             <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
               {slide.accentBadges.map((badge, bIdx) => (
                 <div key={bIdx} className="flex items-center gap-1.5 text-xs font-medium text-slate-200 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl backdrop-blur-xs">
@@ -110,7 +100,6 @@ const ReaderBanner = () => {
               ))}
             </div>
 
-            {/* Dynamic Authenticated Call to Action Button Row */}
             <div className="pt-4">
               <Link
                 href={isLoggedIn ? "/books" : "/auth/login"}
@@ -119,15 +108,44 @@ const ReaderBanner = () => {
                 {isLoggedIn ? "Browse Books" : "Get Started"}
               </Link>
             </div>
-
           </div>
         </div>
       ))}
 
-      {/* 2. Manual Arrow Controls */}
+      {/* 🌟 🎯 FIXED: MARQUEE MOVED OUTSIDE OF THE MAP LOOP */}
+      {/* এটি এখন স্লাইড চেঞ্জের সাথে রিস্টার্ট না হয়ে ব্যাকগ্রাউন্ডে অনবরত স্মুথলি চলতে থাকবে */}
+      <div className="absolute bottom-14 inset-x-0 pointer-events-none overflow-hidden select-none z-10 opacity-50 sm:opacity-60">
+        <div className="w-full bg-linear-to-r from-indigo-500/10 via-violet-500/15 to-indigo-500/10 backdrop-blur-md border-y border-white/10 py-3.5 flex overflow-hidden whitespace-nowrap shadow-[0_0_30px_rgba(99,102,241,0.05)]">
+          <div className="animate-marquee-fast flex gap-12 text-sm sm:text-base font-mono font-bold uppercase tracking-[0.2em] text-transparent bg-clip-text bg-linear-to-r from-slate-200 via-indigo-200 to-slate-200">
+            
+            {/* Loop 1 */}
+            <div className="flex items-center gap-12">
+              <span>Computer Science</span> <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_8px_#6366f1]"></span>
+              <span>System Architecture</span> <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse shadow-[0_0_8px_#8b5cf6]"></span>
+              <span>Data Structures</span> <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_8px_#6366f1]"></span>
+              <span>Compiler Design</span> <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse shadow-[0_0_8px_#8b5cf6]"></span>
+              <span>Research Assets</span> <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_8px_#6366f1]"></span>
+              <span>Digital Library Nexus</span> <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse shadow-[0_0_8px_#8b5cf6]"></span>
+            </div>
+
+            {/* Loop 2 */}
+            <div className="flex items-center gap-12">
+              <span>Computer Science</span> <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_8px_#6366f1]"></span>
+              <span>System Architecture</span> <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse shadow-[0_0_8px_#8b5cf6]"></span>
+              <span>Data Structures</span> <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_8px_#6366f1]"></span>
+              <span>Compiler Design</span> <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse shadow-[0_0_8px_#8b5cf6]"></span>
+              <span>Research Assets</span> <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_8px_#6366f1]"></span>
+              <span>Digital Library Nexus</span> <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse shadow-[0_0_8px_#8b5cf6]"></span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {/* 🧭 SLIDER CONTROLS */}
       <button
         onClick={prevSlide}
-        className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-xl bg-slate-950/60 hover:bg-slate-900 border border-white/10 flex items-center justify-center text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 shadow-xl active:scale-95"
+        className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-xl bg-slate-950/60 hover:bg-slate-900 border border-white/10 flex items-center justify-center text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 shadow-xl active:scale-95"
         aria-label="Previous Slide"
       >
         <ChevronLeft className="w-5 h-5" />
@@ -135,13 +153,13 @@ const ReaderBanner = () => {
 
       <button
         onClick={nextSlide}
-        className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-xl bg-slate-950/60 hover:bg-slate-900 border border-white/10 flex items-center justify-center text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 shadow-xl active:scale-95"
+        className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-xl bg-slate-950/60 hover:bg-slate-900 border border-white/10 flex items-center justify-center text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 shadow-xl active:scale-95"
         aria-label="Next Slide"
       >
         <ChevronRight className="w-5 h-5" />
       </button>
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2.5 z-20">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2.5 z-30">
         {slides.map((_, dotIdx) => (
           <button
             key={dotIdx}

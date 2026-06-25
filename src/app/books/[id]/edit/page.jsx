@@ -27,7 +27,6 @@ export default function EditBookPage() {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-  // 🔒 SECURITY GUARDRAIL: Client-Side Session Check for Librarian & Admin
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -36,14 +35,12 @@ export default function EditBookPage() {
           const session = await res.json();
           const userRole = session?.user?.role?.toLowerCase();
 
-          // 🌟 লজিক আপডেট: ইউজার যদি librarian বা admin কোনোটিই না হয়, তবেই রিডাইরেক্ট হবে
           if (userRole !== 'librarian' && userRole !== 'admin') {
             router.replace(`/books/${id}`); 
             return;
           }
         } else {
-          // সেশন রেসপন্স ওকে না হলে (লগইন না থাকলে) লগইন পেজে পাঠান
-          router.replace('/login');
+          router.replace('/auth/login');
           return;
         }
       } catch (err) {
@@ -56,7 +53,6 @@ export default function EditBookPage() {
     checkAuth();
   }, [id, router]);
 
-  // পেজ লোড হওয়ার সাথে সাথে বইয়ের ডাটাবেজ রেকর্ড ফেচ করা
   useEffect(() => {
     const fetchBookDetails = async () => {
       if (authChecking) return;

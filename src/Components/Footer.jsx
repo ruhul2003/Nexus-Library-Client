@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import {  LogoGithub, LogoTelegram, Envelope } from '@gravity-ui/icons';
 import { FaXTwitter } from "react-icons/fa6";
+import { toast } from 'react-hot-toast';
 
 
 const Footer = () => {
@@ -12,7 +13,7 @@ const Footer = () => {
   const handleNewsletterSubmit = (e) => {
     e.preventDefault();
     // Frontend placeholder interaction
-    alert(`Thank you! ${email} has been registered to the Nexus Intel feed.`);
+    toast.success(`Thank you! ${email} has been registered to the Nexus Intel feed.`);
     setEmail('');
   };
 

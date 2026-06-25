@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 import { 
   LayoutCells, ShieldCheck, BookOpen, TrashBin, 
   Bars, Xmark, Persons, CirclePlus, PersonXmark,
@@ -90,7 +91,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({ status: 'Published' })
       });
       if (!res.ok) throw new Error("Approval mutator failure");
-      alert("Book approved and published successfully!");
+      toast.success("Book approved and published successfully!");
       fetchAdminData();
     } catch (err) {
       console.error(err);
@@ -118,7 +119,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({ role: 'admin' })
       });
       if (!res.ok) throw new Error("Role mutation failed");
-      alert("User account successfully promoted to Admin authority!");
+      toast.success("User account successfully promoted to Admin authority!");
       fetchAdminData();
     } catch (err) {
       console.error(err);
