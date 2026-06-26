@@ -3,47 +3,46 @@ import Link from 'next/link';
 import { stripe } from '../../../lib/stripe';
 import { CircleCheck, LayoutCells } from '@gravity-ui/icons';
 
-// নিশ্চিত করবে যে পেজটি যেন কোনোভাবেই ক্যাশ (Cache) না হয়
 export const revalidate = 0;
 
 export default async function SuccessPage({ searchParams }) {
-  // ১. Next.js 15+ এর জন্য searchParams রেজলভ করা
   const params = await searchParams;
   const session_id = params?.session_id;
 
-  // ইউজার যদি সরাসরি বা ভুল লিংকে আসে, ক্র্যাশ না করিয়ে হোমপেজে পাঠিয়ে দিন
   if (!session_id || typeof session_id !== 'string') {
     return redirect('/');
   }
 
   let session;
   try {
-    // Stripe থেকে সেশন ডিটেইলস রিট্রিভ করা
     session = await stripe.checkout.sessions.retrieve(session_id);
   } catch (stripeErr) {
     console.error("Stripe session retrieval failed:", stripeErr);
     return redirect('/');
   }
 
-  // ২. পেমেন্ট স্ট্যাটাস চেক (অসম্পূর্ণ থাকলে হোমে ব্যাক করবে)
   if (session.status === 'open') {
     return redirect('/');
   }
 
   if (session.status === 'complete') {
-    // ৩. এক্সপ্রেস ব্যাকএন্ডে ডেটা পাস করার নিরাপদ সার্ভার-টু-সার্ভার ফেচ
+    // লগইন করা ইউজারের ইমেইল ট্র্যাক করার জন্য মেটাডেটাকে ফার্স্ট প্রায়োরিটি দেওয়া হলো
+    const finalCustomerEmail = 
+      session.metadata?.userEmail || 
+      session.customer_details?.email || 
+      session.customer_email;
+
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
       const confirmRes = await fetch(`${apiUrl}/api/orders/confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Inside the confirmRes fetch body:
         body: JSON.stringify({
           sessionId: session.id,
-          customerEmail: session.customer_details?.email,
+          customerEmail: finalCustomerEmail ? finalCustomerEmail.toLowerCase().trim() : 'unknown@system.com',
           amountTotal: session.amount_total,
-          bookId: session.metadata?.bookId,        // ← This is crucial
+          bookId: session.metadata?.bookId,        
           bookTitle: session.metadata?.bookTitle,
         }),
         cache: 'no-store'
@@ -54,7 +53,6 @@ export default async function SuccessPage({ searchParams }) {
         console.warn("Backend order submission response warning:", errData.message);
       }
     } catch (error) {
-      // নেটওয়ার্ক ফেল বা ব্যাকএন্ড অফ থাকলে এখানে সাইলেন্টলি ক্যাচ হবে (যাতে পেজ ক্র্যাশ না করে)
       console.error("Critical: Failed to sync transaction state downstream:", error.message);
     }
 
@@ -77,7 +75,7 @@ export default async function SuccessPage({ searchParams }) {
               We appreciate your business! A validation entry was updated inside the terminal core logs.
               A confirmation email was dispatched to:{' '}
               <span className="text-indigo-400 font-semibold block mt-1 break-all">
-                {session.customer_details?.email || 'your registered email'}
+                {finalCustomerEmail || 'your registered email'}
               </span>.
             </p>
           </div>
@@ -96,6 +94,5 @@ export default async function SuccessPage({ searchParams }) {
     );
   }
 
-  // যদি স্ট্যাটাস complete বা open কোনোটিই না হয় (ফলব্যাক)
   return redirect('/');
 }
