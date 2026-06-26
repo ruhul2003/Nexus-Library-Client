@@ -15,7 +15,9 @@ const BooksPage = async ({ searchParams }) => {
   const ITEMS_PER_PAGE = 8; 
 
   try {
-    const res = await fetch('http://localhost:5000/api/books', { cache: 'no-store' });
+    const baseURl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const res = await fetch(`${baseURl}/api/books`, { cache: 'no-store' });
+    
     if (!res.ok) throw new Error('Could not establish database pipeline sync.');
     books = await res.json();
   } catch (err) {
