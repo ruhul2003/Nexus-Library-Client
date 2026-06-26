@@ -5,6 +5,7 @@ import { ArrowLeft, Star, Bookmark, PencilToSquare, TrashBin, EyeSlash } from '@
 import { redirect } from 'next/navigation';
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { stripe } from '@/lib/stripe';
 
 export const revalidate = 0;
 
@@ -50,40 +51,57 @@ const BookDetailsPage = async ({ params }) => {
 
   async function handleCheckout() {
     'use server';
-
-    // 1. Get the current authentication session safely
+    
+    // 1. Verify User Authentication Session
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) redirect('/auth/login');
 
-    // 2. Safely configure target url prioritizing production app URL environment configs
-    const targetUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nexus-library-client.vercel.app';
-    let redirectUrl = null;
+    // 2. Set Up the Absolute Base Production Origin
+    const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://nexus-library-client.vercel.app';
+    const validEmail = session.user?.email ? session.user.email.trim().toLowerCase() : 'unknown@system.com';
+    const price = parseFloat(book?.price || book?.fee || 9.99);
+
+    let checkoutUrl = null;
 
     try {
-      // 3. Build actual FormData matching your route.js requirements
-      const paymentPayload = new FormData();
-      paymentPayload.append('bookId', String(book._id));
-      paymentPayload.append('userEmail', session.user?.email || '');
-
-      // 4. Send request to your local Next.js Route Handler rather than cross-origin servers
-      const response = await fetch(`${targetUrl}/api/checkout_sessions`, {
-        method: 'POST',
-        body: paymentPayload, // Passes clean multipart data natively
+      // 3. Directly Call Stripe Natively on the Server (No Internal Fetch needed!)
+      const stripeSession = await stripe.checkout.sessions.create({
+        customer_email: validEmail !== 'unknown@system.com' ? validEmail : undefined,
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: book.title || 'Library Book',
+                description: book.description ? book.description.substring(0, 150) : 'Central Asset Catalog Entry',
+                images: book.imageUrl || book.coverImage ? [book.imageUrl || book.coverImage] : [],
+              },
+              unit_amount: Math.round(price * 100),
+            },
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: `${origin}/books/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/books/${id}`,
+        metadata: {
+          bookId: String(book._id || id),
+          bookTitle: book.title || 'Unknown Title',
+          userEmail: validEmail,
+          librarianEmail: book.librarianEmail || 'System / Direct Upload',
+        },
       });
 
-      // Next.js standard responses handling redirects out-of-the-box
-      if (response.redirected) {
-        redirectUrl = response.url;
-      } else {
-        const sessionData = await response.json();
-        if (sessionData?.url) redirectUrl = sessionData.url;
+      if (stripeSession?.url) {
+        checkoutUrl = stripeSession.url;
       }
     } catch (err) {
-      console.error("Server Action Fetch Error:", err);
+      console.error("Direct Stripe Session Initialization Error:", err);
     }
 
-    if (redirectUrl) {
-      redirect(redirectUrl);
+    // 4. Clean Viewport Redirect to Stripe Checkout Form
+    if (checkoutUrl) {
+      redirect(checkoutUrl);
     }
   }
 
