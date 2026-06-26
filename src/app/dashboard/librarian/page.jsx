@@ -76,7 +76,7 @@ export default function LibrarianDashboard() {
 
   const handleAddBookSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!selectedFile) {
       return toast.error("Please select a book cover thumbnail asset file.");
     }
@@ -91,9 +91,9 @@ export default function LibrarianDashboard() {
         method: 'POST',
         body: imgFormData
       });
-      
+
       const imgBBData = await imgBBRes.json();
-      
+
       if (!imgBBData.success || !imgBBData.data?.url) {
         throw new Error("Asset hosting pipeline verification failure - Image URL missing.");
       }
@@ -125,13 +125,13 @@ export default function LibrarianDashboard() {
       }
 
       toast.success("Book logged into approval queue pipeline!");
-      
+
       setFormData({ title: '', author: '', description: '', fee: '', category: '' });
       setSelectedFile(null);
-      
+
       fetchLibrarianLogs();
       setActiveTab('inventory');
-      
+
     } catch (err) {
       console.error("Operational pipeline error:", err);
       toast.error(`Add book error: ${err.message || "Internal system channel failure."}`);
@@ -233,19 +233,135 @@ export default function LibrarianDashboard() {
         </div>
 
         {activeTab === 'overview' && (
-          <div className="bg-slate-900/40 border border-white/10 rounded-2xl p-6 space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Activity Distribution Ledger Matrix</h3>
-            {analyticalChartBars.length === 0 ? (
-              <p className="text-slate-500 text-xs italic py-4">No data logged metrics present.</p>
-            ) : (
-              <div className="h-40 bg-linear-to-b from-white/5 to-transparent rounded-xl border border-white/5 relative flex items-end p-4 gap-2">
-                {analyticalChartBars.map((node) => (
-                  <div key={node.id} style={{ height: `${node.height}%` }} className="w-full bg-amber-500/20 hover:bg-amber-500/40 border border-amber-500/10 transition-all rounded" />
-                ))}
-              </div>
-            )}
+  <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-8 backdrop-blur-md">
+    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-8">
+      Activity Distribution Ledger Matrix
+    </h3>
+
+    {allOrders.length === 0 ? (
+      <div className="h-64 border border-dashed border-white/10 rounded-2xl flex items-center justify-center text-xs text-slate-500 font-mono uppercase">
+        No transaction metrics logged yet.
+      </div>
+    ) : (
+      <div className="flex flex-col lg:flex-row gap-12 items-start">
+        
+        {/* Donut Chart with External Labels */}
+        <div className="relative w-80 h-80 flex-shrink-0 mx-auto lg:mx-0">
+          <svg className="w-full h-full" viewBox="0 0 100 100">
+            <circle 
+              cx="50" cy="50" r="42" 
+              fill="none" 
+              stroke="#1f2937" 
+              strokeWidth="16"
+            />
+            
+            {(() => {
+              const sorted = [...allOrders].sort((a, b) => (Number(b.fee) || 0) - (Number(a.fee) || 0));
+              const top3 = sorted.slice(0, 3);
+              const othersFee = sorted.slice(3).reduce((sum, o) => sum + (Number(o.fee) || 0), 0);
+              
+              const total = totalEarnings || 1;
+              let offset = -90; // Start from top
+              const colors = ["#fbbf24", "#f59e0b", "#d97706", "#78350f"];
+
+              const segments = [
+                ...top3.map((order, i) => ({
+                  name: (order.bookTitle || order.title || `Order ${i+1}`).substring(0, 22),
+                  value: Number(order.fee) || 0,
+                  color: colors[i]
+                })),
+                ...(othersFee > 0 ? [{
+                  name: "Others",
+                  value: othersFee,
+                  color: "#4b3f2a"
+                }] : [])
+              ];
+
+              return segments.map((seg, index) => {
+                const perc = (seg.value / total) * 100;
+                const circumference = 2 * Math.PI * 42;
+                const dash = `${(perc / 100) * circumference} ${circumference}`;
+                const currentOffset = offset;
+                offset += perc * 3.6;
+
+                return (
+                  <circle
+                    key={index}
+                    cx="50" cy="50" r="42"
+                    fill="none"
+                    stroke={seg.color}
+                    strokeWidth="16"
+                    strokeDasharray={dash}
+                    strokeDashoffset={currentOffset}
+                    strokeLinecap="round"
+                    className="transition-all"
+                  />
+                );
+              });
+            })()}
+          </svg>
+
+          {/* Center Value */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <p className="text-amber-400 text-xs font-mono tracking-widest">TOTAL EARNINGS</p>
+            <p className="text-5xl font-black text-white mt-1 tracking-tighter">
+              ${totalEarnings.toFixed(2)}
+            </p>
+            <p className="text-emerald-400 text-sm mt-1 font-medium">
+              {allOrders.length} Transactions
+            </p>
           </div>
-        )}
+        </div>
+
+        {/* External Labels (like your screenshot) */}
+        <div className="flex-1 pt-6 lg:pt-0">
+          <p className="text-xs uppercase tracking-widest text-slate-500 mb-5 font-mono text-center lg:text-left">
+            Revenue Breakdown
+          </p>
+
+          {(() => {
+            const sorted = [...allOrders].sort((a, b) => (Number(b.fee) || 0) - (Number(a.fee) || 0));
+            const top3 = sorted.slice(0, 3);
+            const othersFee = sorted.slice(3).reduce((sum, o) => sum + (Number(o.fee) || 0), 0);
+            const colors = ["#fbbf24", "#f59e0b", "#d97706", "#78350f"];
+
+            const displayItems = [
+              ...top3.map((order, i) => ({
+                name: order.bookTitle || order.title || `Order ${i+1}`,
+                value: Number(order.fee) || 0,
+                color: colors[i],
+                email: order.userEmail
+              })),
+              ...(othersFee > 0 ? [{
+                name: "Others",
+                value: othersFee,
+                color: "#4b3f2a",
+                email: `${sorted.length - 3} more orders`
+              }] : [])
+            ];
+
+            return displayItems.map((item, index) => (
+              <div key={index} className="flex items-center gap-4 mb-6 last:mb-0">
+                <div className="w-6 h-6 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+                <div className="flex-1">
+                  <p className="text-white font-medium line-clamp-1 text-base">
+                    {item.name}
+                  </p>
+                  <p className="text-xs text-slate-500 font-mono">{item.email}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-amber-400 text-lg">
+                    ${item.value.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            ));
+          })()}
+        </div>
+      </div>
+    )}
+  </div>
+)}
 
         {activeTab === 'add-book' && (
           <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-6 max-w-2xl shadow-xl">
@@ -322,8 +438,8 @@ export default function LibrarianDashboard() {
                         <td className="p-4 text-slate-400">{book.category}</td>
                         <td className="p-4">
                           <span className={`px-2 py-0.5 text-[10px] border font-bold uppercase tracking-wider rounded-md ${book.status === 'Pending Approval' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                              book.status === 'Published' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                'bg-slate-800 text-slate-400 border-white/5'
+                            book.status === 'Published' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                              'bg-slate-800 text-slate-400 border-white/5'
                             }`}>
                             {book.status}
                           </span>
@@ -373,8 +489,8 @@ export default function LibrarianDashboard() {
                         </td>
                         <td className="p-4">
                           <span className={`px-2 py-0.5 text-[10px] border font-bold uppercase tracking-wider rounded-md ${order.status === 'Pending' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                              order.status === 'Dispatched' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                                'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            order.status === 'Dispatched' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                              'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                             }`}>
                             {order.status}
                           </span>
