@@ -1,29 +1,12 @@
 import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 import { stripe } from '../../../lib/stripe';
 
 export async function POST(request) {
   try {
-    const headersList = await headers();
+    // Force your production app URL as the base origin
+    const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://nexus-library-client.vercel.app';
 
-    // === IMPROVED ORIGIN DETECTION ===
-    let origin = headersList.get('origin') ||
-                 headersList.get('referer')?.replace(/\/$/, '') ||
-                 process.env.BETTER_AUTH_URL ||
-                 process.env.NEXT_PUBLIC_APP_URL;
-
-    // Clean the origin (remove trailing paths)
-    if (origin) {
-      origin = origin.split('/').slice(0, 3).join('/');
-    }
-
-    // Hardcoded production fallback (most reliable for Vercel)
-    if (!origin || !origin.includes('vercel.app')) {
-      origin = 'https://nexus-library-client.vercel.app';
-      console.warn('⚠️ Hardcoded Vercel origin used');
-    }
-
-    console.log('🔥 FINAL ORIGIN USED:', origin);
+    console.log('FINAL ORIGIN USED FOR STRIPE:', origin);
 
     const formData = await request.formData();
     const bookId = formData.get('bookId');
@@ -33,7 +16,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Book ID is required' }, { status: 400 });
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexus-library-server.vercel.app';
     const res = await fetch(`${apiUrl}/api/books/${bookId}`, { cache: 'no-store' });
 
     if (!res.ok) {
@@ -74,8 +57,6 @@ export async function POST(request) {
         librarianEmail: book.librarianEmail || 'System / Direct Upload',
       },
     });
-
-    console.log('✅ STRIPE SUCCESS URL:', session.success_url);
 
     return NextResponse.redirect(session.url, { status: 303 });
 

@@ -104,3 +104,4 @@ export default async function SuccessPage({ searchParams }) {
 
   return redirect(APP_URL);
 }
+
