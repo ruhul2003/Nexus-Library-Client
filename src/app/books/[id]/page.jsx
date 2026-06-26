@@ -52,11 +52,9 @@ const BookDetailsPage = async ({ params }) => {
   async function handleCheckout() {
     'use server';
     
-    // 1. Verify User Authentication Session
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) redirect('/auth/login');
 
-    // 2. Set Up the Absolute Base Production Origin
     const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://nexus-library-client.vercel.app';
     const validEmail = session.user?.email ? session.user.email.trim().toLowerCase() : 'unknown@system.com';
     const price = parseFloat(book?.price || book?.fee || 9.99);
@@ -64,7 +62,6 @@ const BookDetailsPage = async ({ params }) => {
     let checkoutUrl = null;
 
     try {
-      // 3. Directly Call Stripe Natively on the Server (No Internal Fetch needed!)
       const stripeSession = await stripe.checkout.sessions.create({
         customer_email: validEmail !== 'unknown@system.com' ? validEmail : undefined,
         line_items: [
@@ -99,7 +96,6 @@ const BookDetailsPage = async ({ params }) => {
       console.error("Direct Stripe Session Initialization Error:", err);
     }
 
-    // 4. Clean Viewport Redirect to Stripe Checkout Form
     if (checkoutUrl) {
       redirect(checkoutUrl);
     }

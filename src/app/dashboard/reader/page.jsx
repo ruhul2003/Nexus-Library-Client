@@ -312,22 +312,126 @@ export default function UserReaderDashboard() {
           </div>
         </div>
 
-        {activeTab === 'overview' && (
-          <div className="space-y-4">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 font-mono">Core Investment Activity Node</h2>
-            {analyticalGraphData.length === 0 ? (
-              <div className="h-44 border border-dashed border-white/10 rounded-xl flex items-center justify-center text-xs text-slate-600 font-mono uppercase">
-                No telemetry metrics logged.
-              </div>
-            ) : (
-              <div className="h-44 bg-slate-900/20 rounded-xl border border-white/10 flex items-end p-4 gap-2 backdrop-blur-xs">
-                {analyticalGraphData.map((node) => (
-                  <div key={node.id} style={{ height: `${node.percentage}%` }} className="w-full bg-indigo-500/30 hover:bg-indigo-500/50 transition-all border border-indigo-500/20 rounded-md" />
-                ))}
-              </div>
-            )}
+       {activeTab === 'overview' && (
+  <div className="space-y-6">
+    <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 font-mono">
+      Core Investment Activity Node
+    </h2>
+
+    {analyticalGraphData.length === 0 ? (
+      <div className="h-64 border border-dashed border-white/10 rounded-2xl flex items-center justify-center text-xs text-slate-600 font-mono uppercase">
+        No telemetry metrics logged.
+      </div>
+    ) : (
+      <div className="bg-slate-900/20 border border-white/10 rounded-3xl p-8 backdrop-blur-md">
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-10">
+          
+          {/* Main Donut Chart */}
+          <div className="relative w-64 h-64 flex-shrink-0">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+              <circle 
+                cx="50" cy="50" r="45" 
+                fill="none" 
+                stroke="#1f2937" 
+                strokeWidth="8"
+              />
+              
+              {enrichedDeliveryHistory.map((order, index) => {
+                const fee = Number(order.fee) || 0;
+                const total = enrichedDeliveryHistory.reduce((sum, o) => sum + (Number(o.fee) || 0), 0) || 1;
+                const percentage = (fee / total) * 100;
+                const circumference = 2 * Math.PI * 45;
+                const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
+                const offset = enrichedDeliveryHistory
+                  .slice(0, index)
+                  .reduce((sum, o) => sum + ((Number(o.fee) || 0) / total) * 360, 0);
+
+                return (
+                  <circle
+                    key={index}
+                    cx="50" cy="50" r="45"
+                    fill="none"
+                    stroke={index % 5 === 0 ? "#6366f1" : index % 5 === 1 ? "#a855f7" : "#22d3ee"}
+                    strokeWidth="8"
+                    strokeDasharray={strokeDasharray}
+                    strokeDashoffset={offset}
+                    strokeLinecap="round"
+                    className="transition-all duration-700"
+                  />
+                );
+              })}
+            </svg>
+
+            {/* Center Content */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+              <p className="text-xs text-slate-500 font-mono">TOTAL SPENT</p>
+              <p className="text-4xl font-black text-white mt-1">
+                ${totalFeesSpent.toFixed(2)}
+              </p>
+              <p className="text-emerald-400 text-sm font-medium mt-1">
+                {enrichedDeliveryHistory.length} Orders
+              </p>
+            </div>
           </div>
-        )}
+
+          {/* Legend + Individual Circles */}
+          <div className="flex-1 max-w-md">
+            <p className="text-xs uppercase tracking-widest text-slate-500 mb-4 font-mono">Spending Breakdown</p>
+            
+            <div className="space-y-5">
+              {enrichedDeliveryHistory.slice(0, 6).map((order, index) => {
+                const fee = Number(order.fee) || 0;
+                const total = totalFeesSpent || 1;
+                const percent = Math.round((fee / total) * 100);
+
+                return (
+                  <div key={index} className="flex items-center gap-4">
+                    <div className="relative w-11 h-11 flex-shrink-0">
+                      <svg className="w-full h-full" viewBox="0 0 36 36">
+                        <path
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke="#1f2937"
+                          strokeWidth="3"
+                        />
+                        <path
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke={index % 4 === 0 ? "#6366f1" : index % 4 === 1 ? "#a855f7" : "#22d3ee"}
+                          strokeWidth="3"
+                          strokeDasharray={`${percent}, 100`}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
+                        {percent}%
+                      </div>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white line-clamp-1">
+                        {order.title}
+                      </p>
+                      <p className="text-xs text-slate-500 font-mono">
+                        ${fee.toFixed(2)}
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-xs bg-white/5 px-2.5 py-1 rounded-full text-slate-400">
+                        {order.status}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+)}
 
         {activeTab === 'delivery' && (
           <div className="overflow-x-auto bg-slate-900/20 border border-white/10 rounded-2xl backdrop-blur-md">
