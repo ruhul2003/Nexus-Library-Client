@@ -312,13 +312,13 @@ export default function UserReaderDashboard() {
           </div>
         </div>
 
-       {activeTab === 'overview' && (
+ {activeTab === 'overview' && (
   <div className="space-y-6">
     <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 font-mono">
       Core Investment Activity Node
     </h2>
 
-    {analyticalGraphData.length === 0 ? (
+    {enrichedDeliveryHistory.length === 0 ? (
       <div className="h-64 border border-dashed border-white/10 rounded-2xl flex items-center justify-center text-xs text-slate-600 font-mono uppercase">
         No telemetry metrics logged.
       </div>
@@ -336,30 +336,50 @@ export default function UserReaderDashboard() {
                 strokeWidth="8"
               />
               
-              {enrichedDeliveryHistory.map((order, index) => {
-                const fee = Number(order.fee) || 0;
-                const total = enrichedDeliveryHistory.reduce((sum, o) => sum + (Number(o.fee) || 0), 0) || 1;
-                const percentage = (fee / total) * 100;
-                const circumference = 2 * Math.PI * 45;
-                const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
-                const offset = enrichedDeliveryHistory
-                  .slice(0, index)
-                  .reduce((sum, o) => sum + ((Number(o.fee) || 0) / total) * 360, 0);
+              {(() => {
+                // Group by title to assign consistent colors
+                const colorMap = new Map();
+                const colors = ["#6366f1", "#a855f7", "#22d3ee", "#ec4899", "#eab308"];
+                
+                let colorIndex = 0;
+                enrichedDeliveryHistory.forEach(order => {
+                  const title = order.title?.trim() || "Unknown";
+                  if (!colorMap.has(title)) {
+                    colorMap.set(title, colors[colorIndex % colors.length]);
+                    colorIndex++;
+                  }
+                });
 
-                return (
-                  <circle
-                    key={index}
-                    cx="50" cy="50" r="45"
-                    fill="none"
-                    stroke={index % 5 === 0 ? "#6366f1" : index % 5 === 1 ? "#a855f7" : "#22d3ee"}
-                    strokeWidth="8"
-                    strokeDasharray={strokeDasharray}
-                    strokeDashoffset={offset}
-                    strokeLinecap="round"
-                    className="transition-all duration-700"
-                  />
-                );
-              })}
+                const total = totalFeesSpent || 1;
+                let offset = 0;
+
+                return enrichedDeliveryHistory.map((order, index) => {
+                  const fee = Number(order.fee) || 0;
+                  const percentage = (fee / total) * 100;
+                  const circumference = 2 * Math.PI * 45;
+                  const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
+                  
+                  const title = order.title?.trim() || "Unknown";
+                  const strokeColor = colorMap.get(title);
+
+                  const currentOffset = offset;
+                  offset += percentage * 3.6;
+
+                  return (
+                    <circle
+                      key={index}
+                      cx="50" cy="50" r="45"
+                      fill="none"
+                      stroke={strokeColor}
+                      strokeWidth="8"
+                      strokeDasharray={strokeDasharray}
+                      strokeDashoffset={currentOffset}
+                      strokeLinecap="round"
+                      className="transition-all duration-700"
+                    />
+                  );
+                });
+              })()}
             </svg>
 
             {/* Center Content */}
@@ -384,6 +404,21 @@ export default function UserReaderDashboard() {
                 const total = totalFeesSpent || 1;
                 const percent = Math.round((fee / total) * 100);
 
+                // Same color logic for legend
+                const colorMap = new Map();
+                const colors = ["#6366f1", "#a855f7", "#22d3ee", "#ec4899", "#eab308"];
+                let colorIndex = 0;
+                enrichedDeliveryHistory.forEach(o => {
+                  const t = o.title?.trim() || "Unknown";
+                  if (!colorMap.has(t)) {
+                    colorMap.set(t, colors[colorIndex % colors.length]);
+                    colorIndex++;
+                  }
+                });
+
+                const title = order.title?.trim() || "Unknown";
+                const strokeColor = colorMap.get(title);
+
                 return (
                   <div key={index} className="flex items-center gap-4">
                     <div className="relative w-11 h-11 flex-shrink-0">
@@ -397,7 +432,7 @@ export default function UserReaderDashboard() {
                         <path
                           d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                           fill="none"
-                          stroke={index % 4 === 0 ? "#6366f1" : index % 4 === 1 ? "#a855f7" : "#22d3ee"}
+                          stroke={strokeColor}
                           strokeWidth="3"
                           strokeDasharray={`${percent}, 100`}
                           strokeLinecap="round"

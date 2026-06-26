@@ -232,7 +232,7 @@ export default function LibrarianDashboard() {
           </div>
         </div>
 
-        {activeTab === 'overview' && (
+            {activeTab === 'overview' && (
   <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-8 backdrop-blur-md">
     <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-8">
       Activity Distribution Ledger Matrix
@@ -245,14 +245,14 @@ export default function LibrarianDashboard() {
     ) : (
       <div className="flex flex-col lg:flex-row gap-12 items-start">
         
-        {/* Donut Chart with External Labels */}
+        {/* Main Donut Chart - Purple/Blue Theme */}
         <div className="relative w-80 h-80 flex-shrink-0 mx-auto lg:mx-0">
-          <svg className="w-full h-full" viewBox="0 0 100 100">
+          <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
             <circle 
               cx="50" cy="50" r="42" 
               fill="none" 
               stroke="#1f2937" 
-              strokeWidth="16"
+              strokeWidth="14"
             />
             
             {(() => {
@@ -261,8 +261,8 @@ export default function LibrarianDashboard() {
               const othersFee = sorted.slice(3).reduce((sum, o) => sum + (Number(o.fee) || 0), 0);
               
               const total = totalEarnings || 1;
-              let offset = -90; // Start from top
-              const colors = ["#fbbf24", "#f59e0b", "#d97706", "#78350f"];
+              let offset = -90;
+              const colors = ["#8b5cf6", "#6366f1", "#3b82f6", "#64748b"]; // Purple to Blue
 
               const segments = [
                 ...top3.map((order, i) => ({
@@ -273,7 +273,7 @@ export default function LibrarianDashboard() {
                 ...(othersFee > 0 ? [{
                   name: "Others",
                   value: othersFee,
-                  color: "#4b3f2a"
+                  color: "#475569"
                 }] : [])
               ];
 
@@ -290,20 +290,20 @@ export default function LibrarianDashboard() {
                     cx="50" cy="50" r="42"
                     fill="none"
                     stroke={seg.color}
-                    strokeWidth="16"
+                    strokeWidth="14"
                     strokeDasharray={dash}
                     strokeDashoffset={currentOffset}
                     strokeLinecap="round"
-                    className="transition-all"
+                    className="transition-all duration-700"
                   />
                 );
               });
             })()}
           </svg>
 
-          {/* Center Value */}
+          {/* Center Content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <p className="text-amber-400 text-xs font-mono tracking-widest">TOTAL EARNINGS</p>
+            <p className="text-purple-400 text-xs font-mono tracking-widest">TOTAL EARNINGS</p>
             <p className="text-5xl font-black text-white mt-1 tracking-tighter">
               ${totalEarnings.toFixed(2)}
             </p>
@@ -313,46 +313,90 @@ export default function LibrarianDashboard() {
           </div>
         </div>
 
-        {/* External Labels (like your screenshot) */}
-        <div className="flex-1 pt-6 lg:pt-0">
-          <p className="text-xs uppercase tracking-widest text-slate-500 mb-5 font-mono text-center lg:text-left">
-            Revenue Breakdown
+        {/* Spending Breakdown - Right Side */}
+        <div className="flex-1 pt-4">
+          <p className="text-xs uppercase tracking-widest text-slate-500 mb-6 font-mono">
+            SPENDING BREAKDOWN
           </p>
 
           {(() => {
             const sorted = [...allOrders].sort((a, b) => (Number(b.fee) || 0) - (Number(a.fee) || 0));
             const top3 = sorted.slice(0, 3);
             const othersFee = sorted.slice(3).reduce((sum, o) => sum + (Number(o.fee) || 0), 0);
-            const colors = ["#fbbf24", "#f59e0b", "#d97706", "#78350f"];
+            const colors = ["#8b5cf6", "#6366f1", "#3b82f6", "#64748b"];
+
+            const colorMap = new Map();
+            let colorIndex = 0;
+            [...allOrders].forEach(order => {
+              const title = (order.bookTitle || order.title || "Unknown").trim();
+              if (!colorMap.has(title)) {
+                colorMap.set(title, colors[colorIndex % colors.length]);
+                colorIndex++;
+              }
+            });
 
             const displayItems = [
-              ...top3.map((order, i) => ({
-                name: order.bookTitle || order.title || `Order ${i+1}`,
+              ...top3.map((order) => ({
+                name: order.bookTitle || order.title || "Order",
                 value: Number(order.fee) || 0,
-                color: colors[i],
-                email: order.userEmail
+                color: colorMap.get((order.bookTitle || order.title || "Unknown").trim()),
+                email: order.userEmail,
+                status: order.status
               })),
               ...(othersFee > 0 ? [{
                 name: "Others",
                 value: othersFee,
-                color: "#4b3f2a",
-                email: `${sorted.length - 3} more orders`
+                color: "#475569",
+                email: `${sorted.length - 3} more orders`,
+                status: ""
               }] : [])
             ];
 
             return displayItems.map((item, index) => (
-              <div key={index} className="flex items-center gap-4 mb-6 last:mb-0">
-                <div className="w-6 h-6 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
-                <div className="flex-1">
+              <div key={index} className="flex items-center gap-5 mb-7 last:mb-0">
+                {/* Small Circle */}
+                <div className="relative w-11 h-11 flex-shrink-0">
+                  <svg className="w-full h-full" viewBox="0 0 36 36">
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="#1f2937"
+                      strokeWidth="3.5"
+                    />
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke={item.color}
+                      strokeWidth="3.5"
+                      strokeDasharray={`${Math.round((item.value / totalEarnings) * 100)}, 100`}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
+                    {Math.round((item.value / totalEarnings) * 100)}%
+                  </div>
+                </div>
+
+                <div className="flex-1 min-w-0">
                   <p className="text-white font-medium line-clamp-1 text-base">
                     {item.name}
                   </p>
-                  <p className="text-xs text-slate-500 font-mono">{item.email}</p>
+                  <p className="text-xs text-slate-500 font-mono truncate">{item.email}</p>
                 </div>
+
                 <div className="text-right">
                   <p className="font-bold text-amber-400 text-lg">
                     ${item.value.toFixed(2)}
                   </p>
+                  {item.status && (
+                    <span className={`inline-block text-[10px] px-3 py-0.5 rounded-full mt-1 ${
+                      item.status === 'Delivered' 
+                        ? 'bg-emerald-500/10 text-emerald-400' 
+                        : 'bg-amber-500/10 text-amber-400'
+                    }`}>
+                      {item.status}
+                    </span>
+                  )}
                 </div>
               </div>
             ));
