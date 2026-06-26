@@ -5,24 +5,30 @@ import { CircleCheck, LayoutCells } from '@gravity-ui/icons';
 
 export const revalidate = 0;
 
+const APP_URL = process.env.BETTER_AUTH_URL ||
+                process.env.NEXT_PUBLIC_APP_URL ||
+                'https://nexus-library-client.vercel.app';
+
 export default async function SuccessPage({ searchParams }) {
   const params = await searchParams;
   const session_id = params?.session_id;
 
   if (!session_id || typeof session_id !== 'string') {
-    return redirect('/');
+    return redirect(APP_URL);
   }
 
   let session;
   try {
-    session = await stripe.checkout.sessions.retrieve(session_id);
+    session = await stripe.checkout.sessions.retrieve(session_id, {
+      expand: ['customer_details']
+    });
   } catch (stripeErr) {
     console.error("Stripe session retrieval failed:", stripeErr);
-    return redirect('/');
+    return redirect(APP_URL);
   }
 
-  if (session.status === 'open') {
-    return redirect('/');
+  if (session.status === 'open' || !session.status) {
+    return redirect(APP_URL);
   }
 
   if (session.status === 'complete') {
@@ -39,7 +45,7 @@ export default async function SuccessPage({ searchParams }) {
     });
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://nexus-library-server.vercel.app';
 
       const confirmRes = await fetch(`${apiUrl}/api/orders/confirm`, {
         method: 'POST',
@@ -56,7 +62,7 @@ export default async function SuccessPage({ searchParams }) {
 
       if (!confirmRes.ok) {
         const errData = await confirmRes.json().catch(() => ({}));
-        console.warn("Backend order submission response warning:", errData.message);
+        console.warn("Backend order submission response warning:", errData);
       }
     } catch (error) {
       console.error("Critical: Failed to sync transaction state downstream:", error.message);
@@ -96,5 +102,5 @@ export default async function SuccessPage({ searchParams }) {
     );
   }
 
-  return redirect('/');
+  return redirect(APP_URL);
 }

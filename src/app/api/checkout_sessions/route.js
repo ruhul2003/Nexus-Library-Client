@@ -5,12 +5,19 @@ import { stripe } from '../../../lib/stripe';
 export async function POST(request) {
   try {
     const headersList = await headers();
-    
-    // === FORCE PRODUCTION ORIGIN ===
-    let origin = process.env.BETTER_AUTH_URL 
-              || process.env.NEXT_PUBLIC_APP_URL;
 
-    // Hardcoded fallback (সবচেয়ে নিরাপদ)
+    // === IMPROVED ORIGIN DETECTION ===
+    let origin = headersList.get('origin') ||
+                 headersList.get('referer')?.replace(/\/$/, '') ||
+                 process.env.BETTER_AUTH_URL ||
+                 process.env.NEXT_PUBLIC_APP_URL;
+
+    // Clean the origin (remove trailing paths)
+    if (origin) {
+      origin = origin.split('/').slice(0, 3).join('/');
+    }
+
+    // Hardcoded production fallback (most reliable for Vercel)
     if (!origin || !origin.includes('vercel.app')) {
       origin = 'https://nexus-library-client.vercel.app';
       console.warn('⚠️ Hardcoded Vercel origin used');
@@ -20,7 +27,7 @@ export async function POST(request) {
 
     const formData = await request.formData();
     const bookId = formData.get('bookId');
-    const userEmail = formData.get('userEmail'); 
+    const userEmail = formData.get('userEmail');
 
     if (!bookId) {
       return NextResponse.json({ error: 'Book ID is required' }, { status: 400 });
@@ -36,12 +43,12 @@ export async function POST(request) {
     const book = await res.json();
     const price = parseFloat(book.price || book.fee || 9.99);
 
-    const validEmail = userEmail && userEmail.trim() !== '' 
-      ? userEmail.trim().toLowerCase() 
+    const validEmail = userEmail && userEmail.trim() !== ''
+      ? userEmail.trim().toLowerCase()
       : 'unknown@system.com';
 
     const session = await stripe.checkout.sessions.create({
-      customer_email: validEmail !== 'unknown@system.com' ? validEmail : undefined, 
+      customer_email: validEmail !== 'unknown@system.com' ? validEmail : undefined,
       line_items: [
         {
           price_data: {
@@ -51,7 +58,7 @@ export async function POST(request) {
               description: book.description ? book.description.substring(0, 150) : 'Central Asset Catalog Entry',
               images: book.imageUrl || book.coverImage ? [book.imageUrl || book.coverImage] : [],
             },
-            unit_amount: Math.round(price * 100), 
+            unit_amount: Math.round(price * 100),
           },
           quantity: 1,
         },
@@ -59,11 +66,11 @@ export async function POST(request) {
       mode: 'payment',
       success_url: `${origin}/books/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/books/${bookId}`,
-      
+
       metadata: {
         bookId: String(book._id || bookId),
         bookTitle: book.title || 'Unknown Title',
-        userEmail: validEmail, 
+        userEmail: validEmail,
         librarianEmail: book.librarianEmail || 'System / Direct Upload',
       },
     });
