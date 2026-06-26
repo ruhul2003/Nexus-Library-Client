@@ -6,19 +6,17 @@ export async function POST(request) {
   try {
     const headersList = await headers();
     
-    // === Fixed Origin Logic ===
-    let origin = process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
+    // === FORCE PRODUCTION ORIGIN ===
+    let origin = process.env.BETTER_AUTH_URL 
+              || process.env.NEXT_PUBLIC_APP_URL;
 
-    // Dynamic fallback যদি env var না থাকে
-    if (!origin || !origin.startsWith('https://')) {
-      const host = headersList.get('host');
-      const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-      origin = `${protocol}://${host}`;
-      
-      console.warn('⚠️ Using dynamic origin fallback:', origin);
+    // Hardcoded fallback (সবচেয়ে নিরাপদ)
+    if (!origin || !origin.includes('vercel.app')) {
+      origin = 'https://nexus-library-client.vercel.app';
+      console.warn('⚠️ Hardcoded Vercel origin used');
     }
 
-    console.log('✅ Checkout Origin Used:', origin);
+    console.log('🔥 FINAL ORIGIN USED:', origin);
 
     const formData = await request.formData();
     const bookId = formData.get('bookId');
@@ -29,16 +27,13 @@ export async function POST(request) {
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    const res = await fetch(`${apiUrl}/api/books/${bookId}`, {
-      cache: 'no-store',
-    });
+    const res = await fetch(`${apiUrl}/api/books/${bookId}`, { cache: 'no-store' });
 
     if (!res.ok) {
       return NextResponse.json({ error: 'Book not found' }, { status: 404 });
     }
 
     const book = await res.json();
-    
     const price = parseFloat(book.price || book.fee || 9.99);
 
     const validEmail = userEmail && userEmail.trim() !== '' 
@@ -73,15 +68,12 @@ export async function POST(request) {
       },
     });
 
-    console.log('✅ Stripe Session Created - Success URL:', session.success_url);
+    console.log('✅ STRIPE SUCCESS URL:', session.success_url);
 
     return NextResponse.redirect(session.url, { status: 303 });
 
   } catch (err) {
     console.error('Checkout Session Error:', err);
-    return NextResponse.json(
-      { error: err.message || 'Internal Server Error' },
-      { status: 500 }
-    );  
+    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
   }
 }
