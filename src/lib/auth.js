@@ -5,11 +5,12 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 const client = new MongoClient(process.env.MONGODB_URI);
 const db = client.db(process.env.AUTH_DB_NAME);
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 export const auth = betterAuth({
-  // Production + Local both handle করার জন্য
-  baseURL: process.env.BETTER_AUTH_URL 
-           || process.env.NEXT_PUBLIC_APP_URL 
-           || 'http://localhost:3000',
+  baseURL: process.env.BETTER_AUTH_URL || 
+           process.env.NEXT_PUBLIC_APP_URL || 
+           'https://nexus-library-client.vercel.app',
 
   emailAndPassword: { enabled: true },
 
@@ -29,14 +30,25 @@ export const auth = betterAuth({
     },
   },
 
-  // Vercel-এর জন্য গুরুত্বপূর্ণ
+  // Critical fixes for Vercel + Stripe cross-domain redirect
   cookieOptions: {
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: true,                    // Always true for HTTPS
+    sameSite: isProduction ? 'none' : 'lax',
     httpOnly: true,
+    path: '/',
+    domain: isProduction ? undefined : undefined, // Let browser handle domain
   },
 
   session: {
     expiresIn: 60 * 60 * 24 * 7,
   },
+
+  // Important: Trust forwarded headers (Vercel)
+  trustedOrigins: [
+    'https://nexus-library-client.vercel.app',
+    process.env.NEXT_PUBLIC_APP_URL,
+    'http://localhost:3000'
+  ].filter(Boolean),
 });
+
+export default auth;
