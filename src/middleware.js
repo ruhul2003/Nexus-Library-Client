@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
-import { auth } from './lib/auth';
+import { auth } from './lib/auth'; 
 import { headers } from 'next/headers';
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
-  // Success page কে middleware থেকে বাদ দাও (খুব গুরুত্বপূর্ণ!)
-  if (pathname.includes('/books/success') || pathname.includes('/auth/')) {
+  // Success page এবং auth routes কে middleware থেকে বাদ দাও
+  if (
+    pathname.includes('/books/success') || 
+    pathname.includes('/auth/') ||
+    pathname === '/'
+  ) {
     return NextResponse.next();
   }
 
@@ -16,7 +20,7 @@ export async function middleware(request) {
     });
 
     console.log("Middleware Session Audit:", {
-      hasSession: !!session,
+      hasSession: !!session?.user,
       userId: session?.user?.id,
       email: session?.user?.email,
       role: session?.user?.role,
@@ -27,13 +31,12 @@ export async function middleware(request) {
     const userRole = session?.user?.role?.toLowerCase() || 'reader';
 
     if (!isLoggedIn) {
-      // Preserve the original URL for after login redirect
       const loginUrl = new URL('/auth/login', request.url);
-      loginUrl.searchParams.set('callbackUrl', request.url);
+      loginUrl.searchParams.set('callbackUrl', encodeURI(request.url));
       return NextResponse.redirect(loginUrl);
     }
 
-    // Role-based protection
+    // Role protection
     if (pathname.startsWith('/dashboard/admin') && userRole !== 'admin') {
       return NextResponse.redirect(new URL(`/dashboard/${userRole}`, request.url));
     }
@@ -57,6 +60,6 @@ export async function middleware(request) {
 export const config = {
   matcher: [
     '/dashboard/:path*',
-    '/books/success',     // এটাও যোগ করা ভালো যাতে আমরা control করতে পারি
+    '/books/success', 
   ]
 };
