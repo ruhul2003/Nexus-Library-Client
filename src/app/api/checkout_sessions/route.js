@@ -7,7 +7,7 @@ export async function POST(request) {
     const headersList = await headers();
     
     // === Improved Origin Logic ===
-    let origin = process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
+    let origin = process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://nexus-library-client.vercel.app';
 
     // Extra fallback (Vercel-এ env var না লোড হলে)
     if (!origin || !origin.startsWith('https://')) {
@@ -15,10 +15,10 @@ export async function POST(request) {
       const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
       origin = `${protocol}://${host}`;
       
-      console.warn('⚠️ Using dynamic origin fallback:', origin);
+      console.warn('Using dynamic origin fallback:', origin);
     }
 
-    console.log('✅ Checkout Origin Used:', origin); // Vercel log-এ দেখতে পাবেন
+    console.log('✅ Checkout Origin Used:', origin); 
 
     const formData = await request.formData();
     const bookId = formData.get('bookId');
