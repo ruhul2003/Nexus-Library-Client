@@ -79,7 +79,6 @@ export default function PopularCategoriesSection() {
 
   return (
     <section className="w-full space-y-6 py-6">
-      {/* Section Header Context */}
       <div className="border-b border-white/5 pb-4">
         <span className="text-xs font-bold uppercase tracking-widest text-indigo-400">
           Index Classifications
@@ -89,7 +88,6 @@ export default function PopularCategoriesSection() {
         </h2>
       </div>
 
-      {/* Grid Allocation Matrix */}
       <motion.div 
         className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"
         variants={containerVariants}
@@ -111,7 +109,6 @@ export default function PopularCategoriesSection() {
                 href={`/books?search=${encodeURIComponent(cat.name)}`}
                 className={`group block relative h-full bg-slate-900/15 border border-white/10 ${cat.borderColor} rounded-2xl p-5 transition-all duration-300 shadow-xl overflow-hidden backdrop-blur-xs`}
               >
-                {/* Dynamic Gradient Underlay background on hover */}
                 <div className={`absolute inset-0 bg-linear-to-br ${cat.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
                 
                 <div className="relative z-10 flex flex-col items-center text-center space-y-3">

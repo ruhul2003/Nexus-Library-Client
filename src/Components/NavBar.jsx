@@ -23,7 +23,6 @@ const NavBar = () => {
   const isLoggedIn = !!session?.data;
   const user = session?.data?.user;
 
-  // Dynamic role routing computed on every render block safely
   const getDashboardPath = () => {
     if (!user?.role) return '/dashboard/reader';
     
@@ -79,7 +78,6 @@ const NavBar = () => {
             })}
           </div>
 
-          {/* Action / Auth Section */}
           <div className="flex items-center gap-4">
             {isLoggedIn ? (
               <div className="flex items-center gap-3 md:gap-4">
@@ -115,7 +113,6 @@ const NavBar = () => {
               </div>
             ) : (
               <>
-                {/* Desktop Auth Actions */}
                 <div className="hidden md:flex items-center gap-5">
                   <Link
                     href="/auth/login"
@@ -133,7 +130,6 @@ const NavBar = () => {
               </>
             )}
 
-            {/* Mobile Hamburger Control (Aligned Right) */}
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden p-2 text-slate-400 hover:text-white bg-white/5 border border-white/10 rounded-xl transition"
@@ -144,7 +140,6 @@ const NavBar = () => {
         </div>
       </nav>
 
-      {/* Mobile Overlay Menu Tray */}
       {mobileMenuOpen && (
         <div className="md:hidden mx-4 mt-2 max-w-7xl bg-slate-950/95 backdrop-blur-lg border border-white/10 rounded-2xl p-5 space-y-4 shadow-2xl transition-all animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex flex-col gap-3">

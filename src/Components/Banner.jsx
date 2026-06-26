@@ -55,7 +55,6 @@ const ReaderBanner = () => {
   return (
     <div className="relative w-full h-[80vh] min-h-[500px] md:h-[85vh] rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-slate-950 group">
 
-      {/* 🖼️ SLIDER IMAGES & CONTENT LOOP */}
       {slides.map((slide, index) => (
         <div
           key={slide.id}
@@ -112,13 +111,10 @@ const ReaderBanner = () => {
         </div>
       ))}
 
-      {/* 🌟 🎯 FIXED: MARQUEE MOVED OUTSIDE OF THE MAP LOOP */}
-      {/* এটি এখন স্লাইড চেঞ্জের সাথে রিস্টার্ট না হয়ে ব্যাকগ্রাউন্ডে অনবরত স্মুথলি চলতে থাকবে */}
       <div className="absolute bottom-14 inset-x-0 pointer-events-none overflow-hidden select-none z-10 opacity-50 sm:opacity-60">
         <div className="w-full bg-linear-to-r from-indigo-500/10 via-violet-500/15 to-indigo-500/10 backdrop-blur-md border-y border-white/10 py-3.5 flex overflow-hidden whitespace-nowrap shadow-[0_0_30px_rgba(99,102,241,0.05)]">
           <div className="animate-marquee-fast flex gap-12 text-sm sm:text-base font-mono font-bold uppercase tracking-[0.2em] text-transparent bg-clip-text bg-linear-to-r from-slate-200 via-indigo-200 to-slate-200">
             
-            {/* Loop 1 */}
             <div className="flex items-center gap-12">
               <span>Computer Science</span> <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_8px_#6366f1]"></span>
               <span>System Architecture</span> <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse shadow-[0_0_8px_#8b5cf6]"></span>
@@ -128,7 +124,6 @@ const ReaderBanner = () => {
               <span>Digital Library Nexus</span> <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse shadow-[0_0_8px_#8b5cf6]"></span>
             </div>
 
-            {/* Loop 2 */}
             <div className="flex items-center gap-12">
               <span>Computer Science</span> <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-[0_0_8px_#6366f1]"></span>
               <span>System Architecture</span> <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse shadow-[0_0_8px_#8b5cf6]"></span>
@@ -142,7 +137,6 @@ const ReaderBanner = () => {
         </div>
       </div>
 
-      {/* 🧭 SLIDER CONTROLS */}
       <button
         onClick={prevSlide}
         className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-xl bg-slate-950/60 hover:bg-slate-900 border border-white/10 flex items-center justify-center text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-300 z-30 shadow-xl active:scale-95"

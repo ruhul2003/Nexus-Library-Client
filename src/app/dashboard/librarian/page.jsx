@@ -15,17 +15,14 @@ export default function LibrarianDashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
 
-  // Add Book Form State Matrix
   const [formData, setFormData] = useState({
     title: '', author: '', description: '', fee: '', category: ''
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [isSubmittingBook, setIsSubmittingBook] = useState(false);
 
-  // 1. Core Fetch Systems
   const fetchLibrarianLogs = () => {
     setIsLoading(true);
-    // Fetch order delivery pipelines
     fetch('http://localhost:5000/api/librarian/orders')
       .then((res) => res.ok ? res.json() : Promise.reject(res))
       .then((data) => setAllOrders(data))
@@ -43,7 +40,6 @@ export default function LibrarianDashboard() {
     fetchLibrarianLogs();
   }, []);
 
-  // 2. Mutate Order Deliveries State Pipeline
   const mutateOrderStatus = async (id, targetStatus) => {
     try {
       const res = await fetch(`http://localhost:5000/api/orders/${id}/status`, {
@@ -58,9 +54,8 @@ export default function LibrarianDashboard() {
     }
   };
 
-  // 3. Toggle Inventory Visibility (Published / Unpublished)
   const toggleBookStatus = async (bookId, currentStatus) => {
-    if (currentStatus === 'Pending Approval') return; // Enforced constraint protection
+    if (currentStatus === 'Pending Approval') return;
     const nextStatus = currentStatus === 'Published' ? 'Unpublished' : 'Published';
 
     try {
@@ -76,19 +71,16 @@ export default function LibrarianDashboard() {
     }
   };
 
-  // 4. Handle Book Form Submission with external imgBB API upload
-// 4. Handle Book Form Submission with external imgBB API upload
+
   const handleAddBookSubmit = async (e) => {
     e.preventDefault();
     
-    // Safety check: Validate the binary asset file is ready
     if (!selectedFile) {
       return toast.error("Please select a book cover thumbnail asset file.");
     }
 
     setIsSubmittingBook(true);
     try {
-      // Step A: Upload file asset binary to imgBB API engine
       const imgFormData = new FormData();
       imgFormData.append('image', selectedFile);
 
@@ -100,25 +92,22 @@ export default function LibrarianDashboard() {
       
       const imgBBData = await imgBBRes.json();
       
-      // Safety check: Check if imgBB hosted the URL successfully 
       if (!imgBBData.success || !imgBBData.data?.url) {
         throw new Error("Asset hosting pipeline verification failure - Image URL missing.");
       }
 
       const uploadedImageUrl = imgBBData.data.url;
 
-      // Step B: Explicitly assemble payload fields to prevent empty string overrides
       const bookPayload = {
         title: formData.title.trim(),
         author: formData.author.trim(),
         description: formData.description.trim(),
         category: formData.category.trim(),
         fee: parseFloat(formData.fee) || 0,
-        image: uploadedImageUrl, // Explicit assignment
+        image: uploadedImageUrl,
         status: 'Pending Approval'
       };
 
-      // Safety check: Final firewall verification against empty string src injection
       if (!bookPayload.image || bookPayload.image === "") {
         throw new Error("Payload aborted: Image field resolved to an empty string.");
       }
@@ -198,10 +187,8 @@ export default function LibrarianDashboard() {
         </div>
       </aside>
 
-      {/* Main Workspace Frame */}
       <main className="flex-1 w-full min-w-0 p-6 md:p-10 space-y-8 overflow-y-auto max-w-[1600px] mx-auto">
 
-        {/* Dynamic Mobile Navbar Header Area */}
         <div className="flex items-center gap-4 border-b border-white/5 pb-6">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 bg-slate-900 border border-white/10 rounded-xl text-slate-400 hover:text-white">
             <Bars className="w-5 h-5" />
@@ -211,7 +198,6 @@ export default function LibrarianDashboard() {
           </div>
         </div>
 
-        {/* Global Dashboard Metrics Grid System */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div className="bg-slate-900 border border-white/10 p-5 rounded-2xl flex items-center gap-4">
             <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
@@ -244,7 +230,6 @@ export default function LibrarianDashboard() {
           </div>
         </div>
 
-        {/* VIEW TAB 1: Overview Analytics Graphics Panel */}
         {activeTab === 'overview' && (
           <div className="bg-slate-900/40 border border-white/10 rounded-2xl p-6 space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Activity Distribution Ledger Matrix</h3>
@@ -260,7 +245,6 @@ export default function LibrarianDashboard() {
           </div>
         )}
 
-        {/* VIEW TAB 2: Ingest New Volume Forms System */}
         {activeTab === 'add-book' && (
           <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-6 max-w-2xl shadow-xl">
             <div className="mb-6">
@@ -311,7 +295,6 @@ export default function LibrarianDashboard() {
           </div>
         )}
 
-        {/* VIEW TAB 3: Manage Inventory Matrix Table */}
         {activeTab === 'inventory' && (
           <div className="bg-slate-900/50 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
             <div className="p-5 border-b border-white/5 bg-slate-900">
@@ -361,7 +344,6 @@ export default function LibrarianDashboard() {
           </div>
         )}
 
-        {/* VIEW TAB 4: Manage Deliveries Inbound Channels Table */}
         {activeTab === 'deliveries' && (
           <div className="bg-slate-900/50 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
             <div className="p-5 border-b border-white/5 bg-slate-900">

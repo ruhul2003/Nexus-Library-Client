@@ -14,13 +14,12 @@ const BookDetailsPage = async ({ params }) => {
   let reviews = [];
   let error = null;
 
-  let hasPrivilegedAccess = false; // Librarian অথবা Admin উভয়ের জন্য ফ্ল্যাগ
+  let hasPrivilegedAccess = false;
   
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     const userRole = session?.user?.role?.toLowerCase();
     
-    // 🌟 Admin অথবা Librarian হলে প্রিভিলেজড অ্যাক্সেস ট্রু হবে
     if (userRole === 'librarian' || userRole === 'admin') {
       hasPrivilegedAccess = true;
     }
@@ -30,7 +29,6 @@ const BookDetailsPage = async ({ params }) => {
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-  // Fetch Book Info and Book Reviews concurrently
   try {
     const [bookRes, reviewsRes] = await Promise.all([
       fetch(`${apiUrl}/api/books/${id}`, { cache: 'no-store' }),
@@ -79,7 +77,6 @@ const BookDetailsPage = async ({ params }) => {
     if (redirectUrl) redirect(redirectUrl);
   }
 
-  // Handle Unpublish & Delete Server Actions...
   async function handleUnpublish() {
     'use server';
     const targetUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -123,7 +120,6 @@ const BookDetailsPage = async ({ params }) => {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start">
         <div className="md:col-span-5 lg:col-span-4">
           <div className="relative aspect-4/5 w-full rounded-3xl overflow-hidden bg-slate-950 border border-white/10 shadow-2xl">
-            {/* MongoDB এর image অথবা imageUrl প্যারামিটার ডাইনামিকলি ক্যাচ করার হ্যান্ডলার */}
             <Image src={book.image || book.imageUrl || book.coverImage || '/images/book-placeholder.jpg'} alt={book.title} fill priority sizes="(max-width: 768px) 100vw, 400px" className="object-cover" unoptimized />
           </div>
         </div>
@@ -164,7 +160,6 @@ const BookDetailsPage = async ({ params }) => {
           </div>
 
           <div className="pt-6">
-            {/* 🌟 এখানে কন্ডিশন পরিবর্তন করা হয়েছে: Admin অথবা Librarian হলে ম্যানেজমেন্ট বাটনগুলো দেখতে পাবেন */}
             {hasPrivilegedAccess ? (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
                 <Link href={`/books/${book._id}/edit`} className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl text-sm shadow-lg"><PencilToSquare className="w-4 h-4" /> Edit Asset</Link>
@@ -181,7 +176,6 @@ const BookDetailsPage = async ({ params }) => {
         </div>
       </div>
 
-      {/* 💬 REVIEWS BOTTOM DISPLAY SECTION */}
       <div className="pt-8 border-t border-white/10 space-y-6">
         <div>
           <h2 className="text-xl font-black uppercase tracking-tight text-white">Reader Reviews ({reviews.length})</h2>

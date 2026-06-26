@@ -7,7 +7,6 @@ import { Star, ArrowRight, Bookmark } from '@gravity-ui/icons';
 import { motion } from 'framer-motion';
 
 export default function FeaturedClient({ featuredBooks }) {
-  // Animation configurations safely kept inside client territory
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -51,7 +50,6 @@ export default function FeaturedClient({ featuredBooks }) {
       animate="visible"
       variants={containerVariants}
     >
-      {/* Grid Headers Context */}
       <motion.div className="flex items-end justify-between border-b border-white/5 pb-4" variants={headerVariants}>
         <div>
           <motion.span
@@ -85,7 +83,6 @@ export default function FeaturedClient({ featuredBooks }) {
         </motion.div>
       </motion.div>
 
-      {/* 3-Column Content Flex Row */}
       <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" variants={containerVariants}>
         {featuredBooks.map((book, index) => (
           <motion.div
@@ -96,18 +93,16 @@ export default function FeaturedClient({ featuredBooks }) {
             whileTap={{ scale: 0.98 }}
           >
             <div>
-              {/* Image Frame Block */}
-              {/* Image Frame Block */}
+              
               <motion.div className="relative w-full aspect-4/5 rounded-xl overflow-hidden bg-slate-950 border border-white/5 mb-4" whileHover={{ scale: 1.02 }} transition={{ duration: 0.4 }}>
                 <motion.div initial={{ scale: 1.1, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.6, delay: index * 0.1 }} className="w-full h-full">
                   <Image
-                    // Check all potential image keys returned across your MongoDB entries
                     src={book.image || book.coverImage || book.imageUrl || "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=400&auto=format&fit=crop"}
                     alt={book.title || "Book Cover"}
                     fill
                     sizes="(max-width: 7xl) 33vw"
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    unoptimized // Add this parameter to safely load external imgBB links without domain whitelisting crashes
+                    unoptimized 
                   />
                 </motion.div>
                 <motion.div className="absolute top-2.5 right-2.5 z-10" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4, delay: index * 0.1 + 0.3 }}>
@@ -117,7 +112,6 @@ export default function FeaturedClient({ featuredBooks }) {
                 </motion.div>
               </motion.div>
 
-              {/* Book Info row containing styled price matrix */}
               <motion.div className="space-y-1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: index * 0.1 + 0.2 }}>
                 <h3 className="font-bold text-white tracking-tight line-clamp-1 group-hover:text-indigo-400 transition-colors">
                   {book.title}
@@ -130,7 +124,6 @@ export default function FeaturedClient({ featuredBooks }) {
                 </div>
               </motion.div>
 
-              {/* Rating and Availability Matrix */}
               <motion.div className="flex items-center gap-1.5 mt-2.5" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: index * 0.1 + 0.3 }}>
                 <motion.div animate={{ rotate: [0, 15, -15, 0], scale: [1, 1.1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity, repeatDelay: 3, ease: "easeInOut" }}>
                   <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400/20" />
@@ -142,13 +135,11 @@ export default function FeaturedClient({ featuredBooks }) {
                 </span>
               </motion.div>
 
-              {/* Synopsis snippet excerpt */}
               <motion.p className="text-slate-400 text-xs leading-relaxed mt-3 line-clamp-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: index * 0.1 + 0.4 }}>
                 {book.description}
               </motion.p>
             </div>
 
-            {/* Action Buttons Row */}
             <motion.div className="mt-5 pt-3 border-t border-white/5 flex items-center gap-2" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: index * 0.1 + 0.5 }}>
               <motion.div className="flex-1" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link href={`/books/${book.id || book._id}`} className="block bg-white hover:bg-slate-100 text-center text-slate-950 font-bold text-xs py-2 px-3 rounded-xl transition duration-200">
@@ -163,7 +154,6 @@ export default function FeaturedClient({ featuredBooks }) {
         ))}
       </motion.div>
 
-      {/* Main Base View All Trigger Anchor Button */}
       <motion.div className="flex justify-center pt-4" variants={buttonVariants}>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Link href="/books" className="w-full sm:w-auto text-center bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold text-sm px-8 py-3 rounded-xl transition-all duration-200 shadow-md inline-block">

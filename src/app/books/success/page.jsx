@@ -26,7 +26,6 @@ export default async function SuccessPage({ searchParams }) {
   }
 
   if (session.status === 'complete') {
-    // লগইন করা ইউজারের ইমেইল ট্র্যাক করার জন্য মেটাডেটাকে ফার্স্ট প্রায়োরিটি দেওয়া হলো
     const finalCustomerEmail = 
       session.metadata?.userEmail || 
       session.customer_details?.email || 
@@ -56,17 +55,14 @@ export default async function SuccessPage({ searchParams }) {
       console.error("Critical: Failed to sync transaction state downstream:", error.message);
     }
 
-    // ৪. সাকসেসফুল ট্রানজেকশন UI
     return (
       <section className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6">
         <div className="max-w-md w-full bg-slate-900/50 border border-white/10 rounded-2xl p-8 text-center space-y-6 backdrop-blur-md">
 
-          {/* সাকসেস আইকন গ্রিড */}
           <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 mx-auto">
             <CircleCheck className="w-7 h-7" />
           </div>
 
-          {/* টেক্সট মেসেজ */}
           <div className="space-y-2">
             <h1 className="text-xl font-black uppercase tracking-wider text-emerald-400">
               Transaction Cleared
@@ -80,7 +76,6 @@ export default async function SuccessPage({ searchParams }) {
             </p>
           </div>
 
-          {/* ড্যাশবোর্ড অ্যাকশন বাটন */}
           <Link
             href="/dashboard/reader"
             className="inline-flex items-center justify-center gap-2 w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-indigo-600/15 cursor-pointer"

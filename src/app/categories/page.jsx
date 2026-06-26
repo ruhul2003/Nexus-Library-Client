@@ -3,7 +3,6 @@
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-// Lucide React Icons ইম্পোর্ট করা হয়েছে
 import { 
   BookOpen, 
   Atom, 
@@ -15,7 +14,6 @@ import {
   ArrowRight 
 } from "lucide-react";
 
-// ক্যাটাগরি ডেটা অবজেক্ট (Lucide Icons সহ)
 const categories = [
   {
     id: "sci-fi",
@@ -73,7 +71,6 @@ const categories = [
   },
 ];
 
-// Framer Motion Variants
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -134,7 +131,6 @@ export default function CategoriesPage() {
 
         <hr className="border-white/5" />
 
-        {/* Categories Grid Cluster */}
         <motion.div 
           variants={containerVariants}
           initial="hidden"
@@ -152,16 +148,13 @@ export default function CategoriesPage() {
                 whileTap={{ scale: 0.98 }}
                 className={`group relative bg-linear-to-br ${category.color} border border-white/5 rounded-3xl p-6 flex flex-col justify-between transition-all duration-300 cursor-pointer hover:border-white/10 shadow-xl overflow-hidden`}
               >
-                {/* Background Glow Effect */}
                 <div className="absolute -right-10 -top-10 w-32 h-32 bg-white/5 blur-2xl rounded-full group-hover:bg-white/10 transition-all duration-500" />
                 
                 <div className="space-y-4">
-                  {/* Icon Container */}
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border bg-slate-900/80 transition-all duration-3xl ${category.hoverBg}`}>
                     <IconComponent className="w-5 h-5" />
                   </div>
 
-                  {/* Title & Description */}
                   <div className="space-y-1">
                     <h3 className="text-xl font-bold tracking-tight text-white group-hover:text-indigo-300 transition-colors">
                       {category.title}
@@ -172,7 +165,6 @@ export default function CategoriesPage() {
                   </div>
                 </div>
 
-                {/* Bottom Tracker / Actions */}
                 <div className="flex items-center justify-between pt-6 mt-4 border-t border-white/5">
                   <span className="text-xs font-semibold text-slate-500 bg-white/5 px-2.5 py-1 rounded-md">
                     {category.count} Books Available

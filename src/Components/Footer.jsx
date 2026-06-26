@@ -12,7 +12,6 @@ const Footer = () => {
 
   const handleNewsletterSubmit = (e) => {
     e.preventDefault();
-    // Frontend placeholder interaction
     toast.success(`Thank you! ${email} has been registered to the Nexus Intel feed.`);
     setEmail('');
   };
@@ -21,10 +20,8 @@ const Footer = () => {
     <footer className="w-full border-t border-white/5 bg-slate-950 mt-20">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 md:py-16">
         
-        {/* Top Grid Matrix Area */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-white/5">
           
-          {/* Brand/Slogan Column (4 cols) */}
           <div className="md:col-span-5 space-y-4">
             <Link href="/" className="flex items-center gap-3 group">
               <div className="w-8 h-8 rounded-lg bg-linear-to-tr from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-indigo-500/10">
@@ -39,7 +36,6 @@ const Footer = () => {
             </p>
           </div>
 
-          {/* Quick Links Column (3 cols) */}
           <div className="md:col-span-3 space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-widest text-slate-200">Navigation</h4>
             <ul className="space-y-2.5 text-sm">
@@ -55,7 +51,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Newsletter Signup Area (4 cols) */}
           <div className="md:col-span-4 space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-widest text-slate-200">Nexus Intel Wire</h4>
             <p className="text-slate-400 text-xs md:text-sm">Subscribe to receive system patch notes and raw repository drops.</p>
@@ -81,7 +76,6 @@ const Footer = () => {
 
         </div>
 
-        {/* Bottom Metadata Ledger Area */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-slate-500">
           
           {/* Copyright Info */}
@@ -89,7 +83,6 @@ const Footer = () => {
             &copy; {new Date().getFullYear()} Library Nexus Inc. All rights reserved. Built for elite technical literacy.
           </div>
 
-          {/* Social Icons Row (Using Gravity UI brand icons) */}
           <div className="flex items-center gap-4">
             <a 
               href="https://x.com" 

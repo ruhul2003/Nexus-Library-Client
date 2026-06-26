@@ -17,9 +17,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // 🛠️ FIXED: Role-based redirect logic wrapper
   const redirectBasedOnRole = (authData) => {
-    // Better-Auth এর রিটার্নড ডেটা স্ট্রাকচার সাধারণত: { user: { role: '...' }, session: { ... } }
     const rawRole = authData?.user?.role || 'reader';
     const role = rawRole.toLowerCase().trim(); 
     
@@ -31,7 +29,6 @@ export default function LoginPage() {
       router.push('/dashboard/reader');
     }
     
-    // রুট পরিবর্তনের পর ক্লায়েন্ট স্টেট সিঙ্ক করার জন্য 
     router.refresh();
   };
 
@@ -44,13 +41,11 @@ export default function LoginPage() {
       const { data, error: authError } = await authClient.signIn.email({
         email,
         password,
-        // অপশনাল: যদি Better-Auth এ rememberMe কুকি লাইফটাইম সাপোর্ট করাতে চান
         dontRememberSession: !rememberMe, 
       });
 
       if (authError) throw authError;
 
-      // ডেটা পাস করা হচ্ছে যেখানে user.role বিদ্যমান
       redirectBasedOnRole(data);
     } catch (err) {
       setError(err.message || "Invalid credentials. Please try again.");
@@ -66,8 +61,7 @@ export default function LoginPage() {
       
       await authClient.signIn.social({
         provider: "google",
-        // সামাজিক লগইনের পর Better-Auth সার্ভার সাইড থেকে রিডাইরেক্ট হ্যান্ডেল করে, 
-        // তাই সরাসরি নির্দিষ্ট কোনো রোলের ড্যাশবোর্ড বা রুট বেইজড ড্যাশবোর্ডে পাঠানো ভালো
+
         callbackURL: '/dashboard', 
       });
     } catch (err) {

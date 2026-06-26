@@ -34,7 +34,6 @@ export default function BooksGridClient({ filteredBooks }) {
     }
   };
 
-  // Enhanced card animations with multiple stages
   const cardVariants = {
     hidden: { 
       opacity: 0, 
@@ -49,7 +48,7 @@ export default function BooksGridClient({ filteredBooks }) {
       rotateX: 0,
       transition: {
         duration: 0.6,
-        ease: [0.34, 1.56, 0.64, 1], // spring-like cubic-bezier
+        ease: [0.34, 1.56, 0.64, 1], 
       }
     },
     exit: {
@@ -60,7 +59,6 @@ export default function BooksGridClient({ filteredBooks }) {
     }
   };
 
-  // Image reveal animation
   const imageVariants = {
     hidden: { scale: 1.2, opacity: 0 },
     visible: {
@@ -73,7 +71,6 @@ export default function BooksGridClient({ filteredBooks }) {
     }
   };
 
-  // Category badge animation
   const badgeVariants = {
     hidden: { opacity: 0, x: 20 },
     visible: {
@@ -91,7 +88,6 @@ export default function BooksGridClient({ filteredBooks }) {
     }
   };
 
-  // Star animation on hover
   const starVariants = {
     rest: { scale: 1, rotate: 0 },
     hover: {
@@ -105,7 +101,6 @@ export default function BooksGridClient({ filteredBooks }) {
     }
   };
 
-  // Floating bookmark animation
   const bookmarkVariants = {
     rest: { scale: 1, y: 0 },
     hover: {
@@ -124,7 +119,6 @@ export default function BooksGridClient({ filteredBooks }) {
     }
   };
 
-  // Shimmer effect overlay
   const shimmerVariants = {
     initial: { x: -100 },
     hover: {
@@ -133,7 +127,6 @@ export default function BooksGridClient({ filteredBooks }) {
     }
   };
 
-  // Text stagger animation
   const textContainerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -154,7 +147,6 @@ export default function BooksGridClient({ filteredBooks }) {
     }
   };
 
-  // Glow effect animation
   const glowVariants = {
     rest: { opacity: 0, scale: 0.8 },
     hover: {
@@ -190,7 +182,6 @@ export default function BooksGridClient({ filteredBooks }) {
               }}
               className="group relative bg-slate-900/20 hover:bg-slate-900/40 border border-white/10 hover:border-indigo-500/30 rounded-2xl p-4 flex flex-col justify-between transition-all duration-300 shadow-xl backdrop-blur-xs overflow-hidden"
             >
-              {/* Animated background glow on hover */}
               <motion.div
                 variants={glowVariants}
                 initial="rest"
@@ -199,9 +190,7 @@ export default function BooksGridClient({ filteredBooks }) {
               />
 
               <div className="relative z-10">
-                {/* Image Container with Advanced Effects */}
                 <div className="relative w-full aspect-4/5 rounded-xl overflow-hidden bg-slate-950 border border-white/5 mb-4">
-                  {/* Shimmer effect */}
                   <motion.div
                     variants={shimmerVariants}
                     initial="initial"
@@ -209,7 +198,6 @@ export default function BooksGridClient({ filteredBooks }) {
                     className="absolute inset-0 z-20 bg-linear-to-r from-transparent via-white/20 to-transparent pointer-events-none"
                   />
 
-                  {/* Image with parallax - FIXED: Added absolute/relative validation rules and image object fallbacks */}
                   <motion.div
                     variants={imageVariants}
                     initial="hidden"
@@ -219,18 +207,16 @@ export default function BooksGridClient({ filteredBooks }) {
                     className="relative w-full h-full"
                   >
                     <Image
-                      // FIXED: Resolves empty string crash errors across structural schema variations
                       src={book.image || book.coverImage || book.imageUrl || "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=400&auto=format&fit=crop"}
                       alt={book.title || "Book Cover Asset"}
                       fill
                       sizes="(max-width: 1280px) 25vw, 20vw"
                       className="object-cover"
                       priority={index < 4}
-                      unoptimized // Bypasses optimization constraints for external imgBB delivery URLs
+                      unoptimized 
                     />
                   </motion.div>
 
-                  {/* Enhanced Category Badge */}
                   <motion.div 
                     className="absolute top-2.5 right-2.5 z-30"
                     variants={badgeVariants}
@@ -248,7 +234,6 @@ export default function BooksGridClient({ filteredBooks }) {
                     </motion.span>
                   </motion.div>
 
-                  {/* Stock indicator with pulse */}
                   {book.availableCopies <= 3 && book.availableCopies > 0 && (
                     <motion.div
                       animate={{ scale: [1, 1.1, 1] }}
@@ -258,7 +243,6 @@ export default function BooksGridClient({ filteredBooks }) {
                   )}
                 </div>
 
-                {/* Text Metadata with stagger animation */}
                 <motion.div 
                   className="space-y-2.5"
                   variants={textContainerVariants}
@@ -281,7 +265,6 @@ export default function BooksGridClient({ filteredBooks }) {
                     </span>
                   </motion.div>
 
-                  {/* Enhanced Star Rating with animations */}
                   <motion.div 
                     className="flex items-center gap-2 pt-1"
                     variants={textItemVariants}
@@ -306,7 +289,6 @@ export default function BooksGridClient({ filteredBooks }) {
                     </motion.span>
                   </motion.div>
 
-                  {/* Excerpt Block with gradient fade */}
                   <motion.p 
                     className="text-slate-400 text-xs leading-relaxed line-clamp-2 pt-1"
                     variants={textItemVariants}
@@ -316,7 +298,6 @@ export default function BooksGridClient({ filteredBooks }) {
                 </motion.div>
               </div>
 
-              {/* Enhanced Actions Footer */}
               <motion.div 
                 className="mt-5 pt-3 border-t border-white/5 flex items-center gap-2 relative z-10"
                 initial={{ opacity: 0, y: 10 }}
@@ -336,7 +317,6 @@ export default function BooksGridClient({ filteredBooks }) {
                   </Link>
                 </motion.div>
 
-                {/* Enhanced Bookmark Button */}
                 <motion.button 
                   onClick={() => toggleBookmark(book._id)}
                   variants={bookmarkVariants}

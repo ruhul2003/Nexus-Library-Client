@@ -16,7 +16,6 @@ export default function SearchFilter({ currentQuery }) {
     } else {
       params.delete('search');
     }
-    // Pushes the query parameter onto Next.js URL tracking states quietly
     router.replace(`${pathname}?${params.toString()}`);
   };
 

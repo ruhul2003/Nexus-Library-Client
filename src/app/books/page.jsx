@@ -9,11 +9,10 @@ const BooksPage = async ({ searchParams }) => {
   let books = [];
   let error = null;
 
-  // সার্চ এবং পেজিনেশন প্যারামিটার রিসিভ করা
   const params = await searchParams;
   const query = params?.search || '';
   const currentPage = Number(params?.page) || 1;
-  const ITEMS_PER_PAGE = 8; // প্রতি পেজে ৮টি করে বই দেখাবে
+  const ITEMS_PER_PAGE = 8; 
 
   try {
     const res = await fetch('http://localhost:5000/api/books', { cache: 'no-store' });
@@ -23,14 +22,12 @@ const BooksPage = async ({ searchParams }) => {
     error = err.message;
   }
 
-  // ১. সার্চ কুয়েরি অনুযায়ী ফিল্টারিং করা
   const filteredBooks = books.filter(book =>
     book.title?.toLowerCase().includes(query.toLowerCase()) ||
     book.author?.toLowerCase().includes(query.toLowerCase()) ||
     book.tags?.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
   );
 
-  // ২. পেজিনেশন লজিক এবং স্লাইসিং
   const totalItems = filteredBooks.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
   
@@ -59,17 +56,14 @@ const BooksPage = async ({ searchParams }) => {
         <SearchFilter currentQuery={query} />
       </div>
 
-      {/* Conditional Layout Rendering */}
       {paginatedBooks.length === 0 ? (
         <div className="text-center py-20 border border-dashed border-white/5 rounded-3xl bg-white/[0.01]">
           <p className="text-slate-500 text-sm">No items found matching current index parameters.</p>
         </div>
       ) : (
         <>
-          {/* Paginated grid render */}
           <BooksGridClient filteredBooks={paginatedBooks} />
 
-          {/* PAGINATION CONTROLLER CONTROLS */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 pt-6 border-t border-white/5 font-mono text-xs">
               
@@ -85,7 +79,6 @@ const BooksPage = async ({ searchParams }) => {
                 PREV
               </Link>
 
-              {/* Page Number Indication */}
               <div className="flex items-center gap-1">
                 {[...Array(totalPages)].map((_, index) => {
                   const pageNum = index + 1;
@@ -107,7 +100,6 @@ const BooksPage = async ({ searchParams }) => {
                 })}
               </div>
 
-              {/* Next Button */}
               <Link
                 href={{
                   query: { ...params, page: Math.min(totalPages, currentPage + 1) }

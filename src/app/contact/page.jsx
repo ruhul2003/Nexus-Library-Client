@@ -32,7 +32,6 @@ export default function ContactPage() {
     setLoading(true);
     setStatus({ type: null, message: "" });
 
-    // Basic validation
     if (!formData.name || !formData.email || !formData.message) {
       setStatus({ 
         type: "error", 
@@ -64,13 +63,11 @@ export default function ContactPage() {
     } catch (error) {
       console.error("Contact Form Error:", error);
       
-      // Fallback: Show success even if backend is not ready (good UX during development)
       setStatus({ 
         type: "success", 
         message: "Message received! Our team will get back to you shortly." 
       });
       
-      // Optional: Clear form on fallback too
       setFormData({ name: "", email: "", subject: "", message: "" });
     } finally {
       setLoading(false);
@@ -81,7 +78,6 @@ export default function ContactPage() {
     <div className="w-full min-h-screen bg-slate-950 text-white py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-12">
         
-        {/* Header Section */}
         <div className="text-center space-y-4 max-w-2xl mx-auto">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}

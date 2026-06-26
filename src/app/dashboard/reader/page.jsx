@@ -33,7 +33,6 @@ export default function UserReaderDashboard() {
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-  // 1. Fetch User Orders Base Request with Safe Normalization
   const fetchUserOrders = useCallback((isBackground = false) => {
     if (!user?.email) return;
     if (!isBackground) {
@@ -53,20 +52,18 @@ export default function UserReaderDashboard() {
 
   useEffect(() => {
     if (user?.email) {
-      fetchUserOrders(false); // Initial loading foreground dispatch
+      fetchUserOrders(false);
     }
   }, [fetchUserOrders, user?.email]);
 
-  // Background Polling Engine
   useEffect(() => {
     if (!user?.email) return;
     const interval = setInterval(() => {
-      fetchUserOrders(true); // Silent background synchronization
+      fetchUserOrders(true); 
     }, 8000);
     return () => clearInterval(interval);
   }, [user?.email, fetchUserOrders]);
 
-  // 2. Data Enrichment Engine Layer (Merged Book Detail Resolution)
   useEffect(() => {
     let isMounted = true;
     
@@ -116,7 +113,6 @@ export default function UserReaderDashboard() {
     };
   }, [deliveryHistory, API_BASE_URL]);
 
-  // 3. Fetch User Reviews Logs
   useEffect(() => {
     if (user?.email) {
       const cleanEmail = user.email.trim().toLowerCase();
@@ -278,10 +274,8 @@ export default function UserReaderDashboard() {
         </div>
       </aside>
 
-      {/* CORE FRAME CONTENT */}
       <main className="flex-1 w-full min-w-0 p-6 md:p-10 space-y-8 overflow-y-auto max-w-[1600px] mx-auto">
         
-        {/* HEADER BAR */}
         <div className="flex items-center justify-between gap-4 border-b border-white/5 pb-6">
           <div className="flex items-center gap-4">
             <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 bg-slate-900 border border-white/10 rounded-xl text-slate-400 hover:text-white cursor-pointer">
@@ -294,7 +288,6 @@ export default function UserReaderDashboard() {
           </div>
         </div>
 
-        {/* METRICS INDEX CARDS */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div className="bg-slate-900/40 border border-white/10 p-5 rounded-2xl flex items-center gap-4 backdrop-blur-md">
             <CircleCheck className="w-5 h-5 text-emerald-400" />
@@ -319,7 +312,6 @@ export default function UserReaderDashboard() {
           </div>
         </div>
 
-        {/* VIEWPORTS BASED ON TAB SELECTION */}
         {activeTab === 'overview' && (
           <div className="space-y-4">
             <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 font-mono">Core Investment Activity Node</h2>
@@ -381,7 +373,7 @@ export default function UserReaderDashboard() {
                 {enrichedReadingList.map((book) => (
                   <div key={book._id} className="bg-slate-900 border border-white/10 rounded-2xl p-5 flex flex-col justify-between hover:border-indigo-500/50 transition-all backdrop-blur-md">
                     <div className="space-y-4">
-                      <div className="w-full aspect-[4/5] relative bg-slate-950 rounded-xl flex items-center justify-center overflow-hidden border border-white/5">
+                      <div className="w-full aspect-4/5 relative bg-slate-950 rounded-xl flex items-center justify-center overflow-hidden border border-white/5">
                         {book.imageUrl || book.image || book.coverImage ? (
                           <Image 
                             src={book.imageUrl || book.image || book.coverImage} 

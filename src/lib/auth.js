@@ -17,7 +17,7 @@ export const auth = betterAuth({
       role: {
         type: "string",
         required: false,
-        defaultValue: "reader", // Set default to 'reader' matching your UX
+        defaultValue: "reader", 
       },
     },
   },

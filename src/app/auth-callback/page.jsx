@@ -25,7 +25,6 @@ export default function AuthCallbackPage() {
         const rawRole = session?.user?.role || 'reader';
         const role = rawRole.toLowerCase().trim();
 
-        // রোল অনুযায়ী ড্যাশবোর্ডে পাঠানো হচ্ছে
         if (role === 'admin') {
           router.push('/dashboard/admin');
         } else if (role === 'librarian') {
@@ -47,7 +46,6 @@ export default function AuthCallbackPage() {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
       <div className="space-y-3 text-center">
-        {/* একটি সিম্পল অ্যানিমেটেড লোডার */}
         <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
         <p className="text-xs font-mono tracking-widest text-violet-400 uppercase animate-pulse">
           {statusMessage}
