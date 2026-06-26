@@ -4,13 +4,15 @@ import FeaturedClient from './FeaturedClient';
 export const revalidate = 0;
 
 const Featured = async () => {
+    const apiURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
   let featuredBooks = [];
   let error = null;
 
   const FALLBACK_COVER = "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=400&auto=format&fit=crop";
 
   try {
-    const res = await fetch('http://localhost:5000/api/books', { cache: 'no-store' });
+    const res = await fetch(`${apiURL}/api/books`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Could not establish catalog database link.');
     const data = await res.json();
 

@@ -14,6 +14,8 @@ export default function LibrarianDashboard() {
   const [inventory, setInventory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const apiURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
 
   const [formData, setFormData] = useState({
     title: '', author: '', description: '', fee: '', category: ''
@@ -23,13 +25,13 @@ export default function LibrarianDashboard() {
 
   const fetchLibrarianLogs = () => {
     setIsLoading(true);
-    fetch('http://localhost:5000/api/librarian/orders')
+    fetch(`${apiURL}/api/librarian/orders`)
       .then((res) => res.ok ? res.json() : Promise.reject(res))
       .then((data) => setAllOrders(data))
       .catch((err) => console.error("Could not fetch log lines:", err));
 
     // Fetch librarian personal inventory matrix
-    fetch('http://localhost:5000/api/librarian/books')
+    fetch(`${apiURL}/api/librarian/books`)
       .then((res) => res.ok ? res.json() : Promise.reject(res))
       .then((data) => setInventory(data))
       .catch((err) => console.error("Could not fetch inventory:", err))
@@ -42,7 +44,7 @@ export default function LibrarianDashboard() {
 
   const mutateOrderStatus = async (id, targetStatus) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/${id}/status`, {
+      const res = await fetch(`${apiURL}/api/orders/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: targetStatus }),
@@ -59,7 +61,7 @@ export default function LibrarianDashboard() {
     const nextStatus = currentStatus === 'Published' ? 'Unpublished' : 'Published';
 
     try {
-      const res = await fetch(`http://localhost:5000/api/books/${bookId}/visibility`, {
+      const res = await fetch(`${apiURL}/api/books/${bookId}/visibility`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: nextStatus }),
@@ -112,7 +114,7 @@ export default function LibrarianDashboard() {
         throw new Error("Payload aborted: Image field resolved to an empty string.");
       }
 
-      const res = await fetch('http://localhost:5000/api/books', {
+      const res = await fetch(`${apiURL}/api/books`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bookPayload)
@@ -249,7 +251,7 @@ export default function LibrarianDashboard() {
           <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-6 max-w-2xl shadow-xl">
             <div className="mb-6">
               <h2 className="font-bold text-sm uppercase tracking-wider text-slate-200">Catalog Registry Form Ingestion</h2>
-              <p className="text-[11px] text-slate-500 mt-0.5">Newly logged items enter the database defaulted as 'Pending Approval'.</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Newly logged items enter the database defaulted as Pending Approval.</p>
             </div>
             <form onSubmit={handleAddBookSubmit} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

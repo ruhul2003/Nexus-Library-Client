@@ -31,8 +31,8 @@ export default function AdminDashboard() {
           setAdminUser(null);
           return;
         }
-
-        const res = await fetch(`http://localhost:5000/api/users/${activeAuthEmail}`);
+        const apiURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const res = await fetch(`${apiURL}/api/users/${activeAuthEmail}`);
         if (res.ok) {
           const dbUserData = await res.json();
           setAdminUser(dbUserData);
@@ -53,19 +53,19 @@ export default function AdminDashboard() {
   const fetchAdminData = async () => {
     setIsLoading(true);
     try {
-      const booksRes = await fetch('http://localhost:5000/api/Books');
+      const apiURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const booksRes = await fetch(`${apiURL}/api/Books`);
       if (booksRes.ok) {
         const booksData = await booksRes.json();
         setAllBooks(booksData);
       }
 
-      const usersRes = await fetch('http://localhost:5000/api/users');
+      const usersRes = await fetch(`${apiURL}/api/users`);
       if (usersRes.ok) {
         const usersData = await usersRes.json();
         setAllUsers(usersData);
       }
-
-      const txRes = await fetch('http://localhost:5000/api/admin/transactions');
+      const txRes = await fetch(`${apiURL}/api/admin/transactions`);
       if (txRes.ok) {
         const txData = await txRes.json();
         setAllTransactions(txData);
@@ -85,7 +85,9 @@ export default function AdminDashboard() {
 
   const handleApprovePublish = async (bookId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/books/${bookId}/approve`, {
+      const apiURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+      const res = await fetch(`${apiURL}/api/admin/books/${bookId}/approve`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'Published' })
@@ -101,7 +103,9 @@ export default function AdminDashboard() {
   const handleDeleteBook = async (bookId) => {
     if (!confirm("Are you absolutely sure you want to purge this book volume ledger from database?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/books/${bookId}`, {
+            const apiURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+      const res = await fetch(`${apiURL}/api/admin/books/${bookId}`, {
         method: 'DELETE'
       });
       if (!res.ok) throw new Error("Delete book action failed");
@@ -113,7 +117,9 @@ export default function AdminDashboard() {
 
   const handleMakeAdmin = async (userId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/users/${userId}/role`, {
+            const apiURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+      const res = await fetch(`${apiURL}/api/admin/users/${userId}/role`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: 'admin' })
@@ -129,7 +135,8 @@ export default function AdminDashboard() {
   const handleDeleteUser = async (userId) => {
     if (!confirm("Are you sure you want to permanently delete this account registry from the system?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
+      const apiURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiURL}/api/admin/users/${userId}`, {
         method: 'DELETE'
       });
       if (!res.ok) throw new Error("Account drop failed");
