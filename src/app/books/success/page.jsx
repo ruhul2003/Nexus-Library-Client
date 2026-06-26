@@ -26,10 +26,17 @@ export default async function SuccessPage({ searchParams }) {
   }
 
   if (session.status === 'complete') {
-    const finalCustomerEmail = 
-      session.metadata?.userEmail || 
-      session.customer_details?.email || 
+    const finalCustomerEmail =
+      session.metadata?.userEmail ||
+      session.customer_details?.email ||
       session.customer_email;
+
+    console.log('Success Page - Session:', {
+      id: session.id,
+      status: session.status,
+      customerEmail: finalCustomerEmail,
+      metadata: session.metadata
+    });
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -41,7 +48,7 @@ export default async function SuccessPage({ searchParams }) {
           sessionId: session.id,
           customerEmail: finalCustomerEmail ? finalCustomerEmail.toLowerCase().trim() : 'unknown@system.com',
           amountTotal: session.amount_total,
-          bookId: session.metadata?.bookId,        
+          bookId: session.metadata?.bookId,
           bookTitle: session.metadata?.bookTitle,
         }),
         cache: 'no-store'

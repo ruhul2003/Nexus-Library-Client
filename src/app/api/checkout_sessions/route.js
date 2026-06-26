@@ -5,7 +5,7 @@ import { stripe } from '../../../lib/stripe';
 export async function POST(request) {
   try {
     const headersList = await headers();
-    const origin = process.env.BETTER_AUTH_URL;
+    const origin = process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
 
     const formData = await request.formData();
     const bookId = formData.get('bookId');
