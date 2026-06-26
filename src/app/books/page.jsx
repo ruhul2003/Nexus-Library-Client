@@ -1,7 +1,5 @@
 import React from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { Layers } from '@gravity-ui/icons';
 import SearchFilter from './SearchFilter'; 
 import BooksGridClient from '@/Components/BooksGridClient'; 
 
@@ -11,7 +9,11 @@ const BooksPage = async ({ searchParams }) => {
   let books = [];
   let error = null;
 
-  const query = (await searchParams)?.search || '';
+  // সার্চ এবং পেজিনেশন প্যারামিটার রিসিভ করা
+  const params = await searchParams;
+  const query = params?.search || '';
+  const currentPage = Number(params?.page) || 1;
+  const ITEMS_PER_PAGE = 8; // প্রতি পেজে ৮টি করে বই দেখাবে
 
   try {
     const res = await fetch('http://localhost:5000/api/books', { cache: 'no-store' });
@@ -21,11 +23,20 @@ const BooksPage = async ({ searchParams }) => {
     error = err.message;
   }
 
+  // ১. সার্চ কুয়েরি অনুযায়ী ফিল্টারিং করা
   const filteredBooks = books.filter(book =>
-    book.title.toLowerCase().includes(query.toLowerCase()) ||
-    book.author.toLowerCase().includes(query.toLowerCase()) ||
+    book.title?.toLowerCase().includes(query.toLowerCase()) ||
+    book.author?.toLowerCase().includes(query.toLowerCase()) ||
     book.tags?.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
   );
+
+  // ২. পেজিনেশন লজিক এবং স্লাইসিং
+  const totalItems = filteredBooks.length;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedBooks = filteredBooks.slice(startIndex, endIndex);
 
   if (error) {
     return (
@@ -49,13 +60,68 @@ const BooksPage = async ({ searchParams }) => {
       </div>
 
       {/* Conditional Layout Rendering */}
-      {filteredBooks.length === 0 ? (
+      {paginatedBooks.length === 0 ? (
         <div className="text-center py-20 border border-dashed border-white/5 rounded-3xl bg-white/[0.01]">
           <p className="text-slate-500 text-sm">No items found matching current index parameters.</p>
         </div>
       ) : (
-        /* Render animating Framer-Motion wrapper safely initialized */
-        <BooksGridClient filteredBooks={filteredBooks} />
+        <>
+          {/* Paginated grid render */}
+          <BooksGridClient filteredBooks={paginatedBooks} />
+
+          {/* PAGINATION CONTROLLER CONTROLS */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-6 border-t border-white/5 font-mono text-xs">
+              
+              {/* Previous Button */}
+              <Link
+                href={{
+                  query: { ...params, page: Math.max(1, currentPage - 1) }
+                }}
+                className={`px-4 py-2 bg-slate-900 border border-white/10 rounded-xl hover:bg-slate-800 transition ${
+                  currentPage === 1 ? 'pointer-events-none opacity-40' : ''
+                }`}
+              >
+                PREV
+              </Link>
+
+              {/* Page Number Indication */}
+              <div className="flex items-center gap-1">
+                {[...Array(totalPages)].map((_, index) => {
+                  const pageNum = index + 1;
+                  return (
+                    <Link
+                      key={pageNum}
+                      href={{
+                        query: { ...params, page: pageNum }
+                      }}
+                      className={`w-9 h-9 flex items-center justify-center rounded-xl font-bold border transition ${
+                        currentPage === pageNum
+                          ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/20'
+                          : 'bg-slate-900/50 border-white/5 text-slate-400 hover:text-white hover:bg-slate-900'
+                      }`}
+                    >
+                      {pageNum}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* Next Button */}
+              <Link
+                href={{
+                  query: { ...params, page: Math.min(totalPages, currentPage + 1) }
+                }}
+                className={`px-4 py-2 bg-slate-900 border border-white/10 rounded-xl hover:bg-slate-800 transition ${
+                  currentPage === totalPages ? 'pointer-events-none opacity-40' : ''
+                }`}
+              >
+                NEXT
+              </Link>
+
+            </div>
+          )}
+        </>
       )}
 
     </div>
