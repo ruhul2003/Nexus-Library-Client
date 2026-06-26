@@ -5,7 +5,9 @@ import { stripe } from '../../../lib/stripe';
 export async function POST(request) {
   try {
     const headersList = await headers();
-    const origin = headersList.get('origin') || 'http://localhost:3000' || 'https://nexus-library-client.vercel.app' ;
+    const origin =
+  headersList.get("origin") ||
+  process.env.NEXT_PUBLIC_APP_URL;
 
     const formData = await request.formData();
     const bookId = formData.get('bookId');
