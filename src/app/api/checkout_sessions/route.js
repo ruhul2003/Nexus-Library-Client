@@ -1,104 +1,87 @@
-import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { stripe } from "../../../lib/stripe";
+import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
+import { stripe } from '../../../lib/stripe';
 
 export async function POST(request) {
   try {
     const headersList = await headers();
+    
+    // === Fixed Origin Logic ===
+    let origin = process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
 
-    // === Improved Origin Logic ===
-    const origin =
-      process.env.BETTER_AUTH_URL ||
-      process.env.NEXT_PUBLIC_APP_URL ||
-      "https://nexus-library-client.vercel.app";
-
-    console.log("Origin Used in Production:", origin);
-
-    // Extra fallback (Vercel-এ env var না লোড হলে)
-    if (!origin || !origin.startsWith("https://")) {
-      const host = headersList.get("host");
-      const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+    // Dynamic fallback যদি env var না থাকে
+    if (!origin || !origin.startsWith('https://')) {
+      const host = headersList.get('host');
+      const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
       origin = `${protocol}://${host}`;
-
-      console.warn("Using dynamic origin fallback:", origin);
+      
+      console.warn('⚠️ Using dynamic origin fallback:', origin);
     }
 
-    console.log("✅ Checkout Origin Used:", origin);
+    console.log('✅ Checkout Origin Used:', origin);
 
     const formData = await request.formData();
-    const bookId = formData.get("bookId");
-    const userEmail = formData.get("userEmail");
+    const bookId = formData.get('bookId');
+    const userEmail = formData.get('userEmail'); 
 
     if (!bookId) {
-      return NextResponse.json(
-        { error: "Book ID is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Book ID is required' }, { status: 400 });
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     const res = await fetch(`${apiUrl}/api/books/${bookId}`, {
-      cache: "no-store",
+      cache: 'no-store',
     });
 
     if (!res.ok) {
-      return NextResponse.json({ error: "Book not found" }, { status: 404 });
+      return NextResponse.json({ error: 'Book not found' }, { status: 404 });
     }
 
     const book = await res.json();
-
+    
     const price = parseFloat(book.price || book.fee || 9.99);
 
-    const validEmail =
-      userEmail && userEmail.trim() !== ""
-        ? userEmail.trim().toLowerCase()
-        : "unknown@system.com";
+    const validEmail = userEmail && userEmail.trim() !== '' 
+      ? userEmail.trim().toLowerCase() 
+      : 'unknown@system.com';
 
     const session = await stripe.checkout.sessions.create({
-      customer_email:
-        validEmail !== "unknown@system.com" ? validEmail : undefined,
+      customer_email: validEmail !== 'unknown@system.com' ? validEmail : undefined, 
       line_items: [
         {
           price_data: {
-            currency: "usd",
+            currency: 'usd',
             product_data: {
-              name: book.title || "Library Book",
-              description: book.description
-                ? book.description.substring(0, 150)
-                : "Central Asset Catalog Entry",
-              images:
-                book.imageUrl || book.coverImage
-                  ? [book.imageUrl || book.coverImage]
-                  : [],
+              name: book.title || 'Library Book',
+              description: book.description ? book.description.substring(0, 150) : 'Central Asset Catalog Entry',
+              images: book.imageUrl || book.coverImage ? [book.imageUrl || book.coverImage] : [],
             },
-            unit_amount: Math.round(price * 100),
+            unit_amount: Math.round(price * 100), 
           },
           quantity: 1,
         },
       ],
-      mode: "payment",
+      mode: 'payment',
       success_url: `${origin}/books/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/books/${bookId}`,
-
+      
       metadata: {
         bookId: String(book._id || bookId),
-        bookTitle: book.title || "Unknown Title",
-        userEmail: validEmail,
-        librarianEmail: book.librarianEmail || "System / Direct Upload",
+        bookTitle: book.title || 'Unknown Title',
+        userEmail: validEmail, 
+        librarianEmail: book.librarianEmail || 'System / Direct Upload',
       },
     });
 
-    console.log("✅ Stripe Session Created:", {
-      sessionId: session.id,
-      successUrl: session.success_url,
-    });
+    console.log('✅ Stripe Session Created - Success URL:', session.success_url);
 
     return NextResponse.redirect(session.url, { status: 303 });
+
   } catch (err) {
-    console.error("Checkout Session Error:", err);
+    console.error('Checkout Session Error:', err);
     return NextResponse.json(
-      { error: err.message || "Internal Server Error" },
-      { status: 500 },
-    );
+      { error: err.message || 'Internal Server Error' },
+      { status: 500 }
+    );  
   }
 }
