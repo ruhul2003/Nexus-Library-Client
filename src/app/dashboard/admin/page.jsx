@@ -266,12 +266,136 @@ export default function AdminDashboard() {
         </div>
 
         {activeTab === 'overview' && (
-          <div className="bg-slate-900/40 border border-white/10 rounded-2xl p-6 text-center py-12">
-            <ShieldCheck className="w-12 h-12 text-red-500 mx-auto mb-4 animate-pulse" />
-            <h3 className="text-sm font-bold uppercase tracking-wider mb-1">System Core Status: Secure</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">All system routes, inventory data segments, and client accounts are functioning normally within operating baseline guidelines.</p>
+  <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-8 backdrop-blur-md">
+    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-8">
+      System Overview Matrix
+    </h3>
+
+    {isLoading ? (
+      <div className="h-80 flex items-center justify-center">
+        <p className="text-slate-500 font-mono">Loading system telemetry...</p>
+      </div>
+    ) : (
+      <div className="flex flex-col lg:flex-row gap-12 items-start">
+        
+        {/* Clean Donut Chart */}
+        <div className="relative w-80 h-80 flex-shrink-0 mx-auto lg:mx-0">
+          <svg className="w-full h-full" viewBox="0 0 100 100">
+            {/* Background Ring */}
+            <circle 
+              cx="50" cy="50" r="42" 
+              fill="none" 
+              stroke="#1f2937" 
+              strokeWidth="16"
+            />
+            
+            {(() => {
+              const admins = allUsers.filter(u => u.role === 'admin').length;
+              const librarians = allUsers.filter(u => u.role === 'librarian').length;
+              const readers = allUsers.filter(u => !u.role || u.role === 'reader').length;
+              
+              const totalUsers = allUsers.length || 1;
+              let offset = -90;
+              const colors = ["#ef4444", "#a855f7", "#22d3ee"]; // Red, Purple, Cyan
+
+              const segments = [
+                { name: "Admins", value: admins, color: colors[0] },
+                { name: "Librarians", value: librarians, color: colors[1] },
+                { name: "Readers", value: readers, color: colors[2] }
+              ].filter(s => s.value > 0);
+
+              return segments.map((seg, index) => {
+                const perc = (seg.value / totalUsers) * 100;
+                const circumference = 2 * Math.PI * 42;
+                const dash = `${(perc / 100) * circumference} ${circumference}`;
+                const currentOffset = offset;
+                offset += perc * 3.6;
+
+                return (
+                  <circle
+                    key={index}
+                    cx="50" cy="50" r="42"
+                    fill="none"
+                    stroke={seg.color}
+                    strokeWidth="16"
+                    strokeDasharray={dash}
+                    strokeDashoffset={currentOffset}
+                    strokeLinecap="round"
+                    className="transition-all duration-700"
+                  />
+                );
+              });
+            })()}
+          </svg>
+
+          {/* Center Content */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <p className="text-red-400 text-xs font-mono tracking-widest">TOTAL USERS</p>
+            <p className="text-5xl font-black text-white mt-1">
+              {allUsers.length}
+            </p>
+            <p className="text-slate-400 text-sm mt-1">
+              Active Accounts
+            </p>
           </div>
-        )}
+        </div>
+
+        {/* Breakdown Section */}
+        <div className="flex-1 pt-4">
+          <p className="text-xs uppercase tracking-widest text-slate-500 mb-6 font-mono">
+            User Role Distribution
+          </p>
+
+          {(() => {
+            const admins = allUsers.filter(u => u.role === 'admin').length;
+            const librarians = allUsers.filter(u => u.role === 'librarian').length;
+            const readers = allUsers.filter(u => !u.role || u.role === 'reader').length;
+            const colors = ["#ef4444", "#a855f7", "#22d3ee"];
+
+            const items = [
+              { name: "Administrators", value: admins, color: colors[0] },
+              { name: "Librarians", value: librarians, color: colors[1] },
+              { name: "Readers", value: readers, color: colors[2] }
+            ].filter(item => item.value > 0);
+
+            return items.map((item, index) => (
+              <div key={index} className="flex items-center gap-5 mb-7 last:mb-0">
+                <div 
+                  className="w-6 h-6 rounded-full flex-shrink-0" 
+                  style={{ backgroundColor: item.color }}
+                />
+                <div className="flex-1">
+                  <p className="text-white text-base font-medium">{item.name}</p>
+                  <p className="text-xs text-slate-500 font-mono">System Access Level</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-white">{item.value}</p>
+                  <p className="text-xs text-slate-500">
+                    {allUsers.length > 0 ? Math.round((item.value / allUsers.length) * 100) : 0}%
+                  </p>
+                </div>
+              </div>
+            ));
+          })()}
+
+          {/* Extra Stats */}
+          <div className="mt-10 pt-6 border-t border-white/10 grid grid-cols-2 gap-6 text-center">
+            <div>
+              <p className="text-3xl font-black text-amber-400">{pendingApprovals}</p>
+              <p className="text-xs text-slate-500 mt-1">Pending Book Approvals</p>
+            </div>
+            <div>
+              <p className="text-3xl font-black text-emerald-400">
+                ${allTransactions.reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0).toFixed(2)}
+              </p>
+              <p className="text-xs text-slate-500 mt-1">Total Revenue Generated</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+)}
 
         {activeTab === 'manage-books' && (
           <div className="bg-slate-900/50 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
