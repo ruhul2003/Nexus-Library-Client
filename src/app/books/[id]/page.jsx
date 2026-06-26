@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Star, Bookmark, PencilToSquare, TrashBin, EyeSlash } from '@gravity-ui/icons';
 import { redirect } from 'next/navigation';
-import { auth } from "@/lib/auth"; 
+import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
 export const revalidate = 0;
@@ -15,11 +15,11 @@ const BookDetailsPage = async ({ params }) => {
   let error = null;
 
   let hasPrivilegedAccess = false;
-  
+
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     const userRole = session?.user?.role?.toLowerCase();
-    
+
     if (userRole === 'librarian' || userRole === 'admin') {
       hasPrivilegedAccess = true;
     }
@@ -50,31 +50,41 @@ const BookDetailsPage = async ({ params }) => {
 
   async function handleCheckout() {
     'use server';
+
+    // 1. Get the current authentication session safely
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) redirect('/auth/login');
 
-    const targetUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    const finalPrice = book?.price || book?.fee || 0;
+    // 2. Safely configure target url prioritizing production app URL environment configs
+    const targetUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nexus-library-client.vercel.app';
     let redirectUrl = null;
 
     try {
+      // 3. Build actual FormData matching your route.js requirements
+      const paymentPayload = new FormData();
+      paymentPayload.append('bookId', String(book._id));
+      paymentPayload.append('userEmail', session.user?.email || '');
+
+      // 4. Send request to your local Next.js Route Handler rather than cross-origin servers
       const response = await fetch(`${targetUrl}/api/checkout_sessions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          cartItems: [{ id: String(book._id), title: book.title, price: finalPrice, quantity: 1 }]
-        }),
+        body: paymentPayload, // Passes clean multipart data natively
       });
 
-      const sessionData = await response.json();
-      if (sessionData?.success && sessionData?.url) {
-        redirectUrl = sessionData.url; 
+      // Next.js standard responses handling redirects out-of-the-box
+      if (response.redirected) {
+        redirectUrl = response.url;
+      } else {
+        const sessionData = await response.json();
+        if (sessionData?.url) redirectUrl = sessionData.url;
       }
     } catch (err) {
       console.error("Server Action Fetch Error:", err);
     }
 
-    if (redirectUrl) redirect(redirectUrl);
+    if (redirectUrl) {
+      redirect(redirectUrl);
+    }
   }
 
   async function handleUnpublish() {
@@ -84,9 +94,9 @@ const BookDetailsPage = async ({ params }) => {
       const response = await fetch(`${targetUrl}/api/books/${id}/visibility`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'Unpublished' }), 
+        body: JSON.stringify({ status: 'Unpublished' }),
       });
-      if (response.ok) redirect('/books'); 
+      if (response.ok) redirect('/books');
     } catch (err) { console.error(err); }
   }
 

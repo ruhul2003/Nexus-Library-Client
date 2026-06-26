@@ -26,8 +26,7 @@ export const auth = betterAuth({
     },
   },
 
-  // REMOVED manual cookieOptions override so Better Auth defaults 
-  // can handle production security and cross-site redirection states natively.
+
 
   session: {
     expiresIn: 60 * 60 * 24 * 7,
