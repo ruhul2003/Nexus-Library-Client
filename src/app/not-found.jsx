@@ -24,7 +24,6 @@ export default function NotFound() {
           </div>
         </div>
 
-        {/* Error Code & Typography */}
         <div className="space-y-2">
           <h1 className="text-7xl font-black tracking-tighter bg-clip-text text-transparent bg-linear-to-b from-white to-slate-500 selection:bg-indigo-500">
             404
