@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
-import { 
-  LayoutCells, ShieldCheck, BookOpen, TrashBin, 
+import {
+  LayoutCells, ShieldCheck, BookOpen, TrashBin,
   Bars, Xmark, Persons, CirclePlus, PersonXmark,
-  CircleCheck 
+  CircleCheck
 } from '@gravity-ui/icons';
 
 export default function AdminDashboard() {
@@ -25,7 +25,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const verifyDatabaseRole = async () => {
       try {
-        const activeAuthEmail = "admin@gmail.com"; 
+        const activeAuthEmail = "admin@gmail.com";
 
         if (!activeAuthEmail) {
           setAdminUser(null);
@@ -103,7 +103,7 @@ export default function AdminDashboard() {
   const handleDeleteBook = async (bookId) => {
     if (!confirm("Are you absolutely sure you want to purge this book volume ledger from database?")) return;
     try {
-            const apiURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const apiURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
       const res = await fetch(`${apiURL}/api/admin/books/${bookId}`, {
         method: 'DELETE'
@@ -117,7 +117,7 @@ export default function AdminDashboard() {
 
   const handleMakeAdmin = async (userId) => {
     try {
-            const apiURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const apiURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
       const res = await fetch(`${apiURL}/api/admin/users/${userId}/role`, {
         method: 'PATCH',
@@ -165,7 +165,7 @@ export default function AdminDashboard() {
         <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl flex items-center justify-center mb-4 font-black">403</div>
         <h2 className="text-xl font-black uppercase tracking-tight mb-2">Unauthorized Core Entry</h2>
         <p className="text-xs text-slate-400 max-w-sm mb-6">Your live database document does not have admin permissions.</p>
-        
+
         <div className="mb-6 p-3 bg-white/5 border border-white/10 rounded-xl text-left max-w-xs font-mono text-[10px] text-slate-400">
           <p>Detected Role: <span className="text-amber-400">{adminUser?.role || 'undefined/none'}</span></p>
           <p>Logged Email: <span>{adminUser?.email || 'none'}</span></p>
@@ -180,7 +180,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex">
-      
+
       {/* Sidebar Layout Navigation Grid */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-white/10 p-6 flex flex-col justify-between transform transition-transform duration-300 lg:translate-x-0 lg:static lg:h-screen ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="space-y-8">
@@ -221,7 +221,7 @@ export default function AdminDashboard() {
       </aside>
 
       <main className="flex-1 w-full min-w-0 p-6 md:p-10 space-y-8 overflow-y-auto max-w-[1600px] mx-auto">
-        
+
         <div className="flex items-center gap-4 border-b border-white/5 pb-6">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 bg-slate-900 border border-white/10 rounded-xl text-slate-400">
             <Bars className="w-5 h-5" />
@@ -233,7 +233,7 @@ export default function AdminDashboard() {
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">
           <div className="bg-slate-900 border border-white/10 p-5 rounded-2xl flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400"><BookOpen className="w-5 h-5"/></div>
+            <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400"><BookOpen className="w-5 h-5" /></div>
             <div>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total System Volumes</p>
               <h3 className="text-xl font-black">{isLoading ? "..." : totalBooks}</h3>
@@ -241,7 +241,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="bg-slate-900 border border-white/10 p-5 rounded-2xl flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400"><CirclePlus className="w-5 h-5"/></div>
+            <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400"><CirclePlus className="w-5 h-5" /></div>
             <div>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Approval Queues</p>
               <h3 className="text-xl font-black text-amber-400">{isLoading ? "..." : pendingApprovals}</h3>
@@ -249,7 +249,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="bg-slate-900 border border-white/10 p-5 rounded-2xl flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400"><Persons className="w-5 h-5"/></div>
+            <div className="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400"><Persons className="w-5 h-5" /></div>
             <div>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Active Librarians</p>
               <h3 className="text-xl font-black">{isLoading ? "..." : totalLibrarians}</h3>
@@ -257,7 +257,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="bg-slate-900 border border-white/10 p-5 rounded-2xl flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400"><Persons className="w-5 h-5"/></div>
+            <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400"><Persons className="w-5 h-5" /></div>
             <div>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Active Readers</p>
               <h3 className="text-xl font-black">{isLoading ? "..." : totalReaders}</h3>
@@ -265,159 +265,156 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-            {activeTab === 'overview' && (
-  <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-8 backdrop-blur-md">
-    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-8">
-      System Overview Matrix
-    </h3>
+        {activeTab === 'overview' && (
+          <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-8 backdrop-blur-md">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-8">
+              System Overview Matrix
+            </h3>
 
-    {isLoading ? (
-      <div className="h-80 flex items-center justify-center">
-        <p className="text-slate-500 font-mono">Loading system telemetry...</p>
-      </div>
-    ) : (
-      <div className="flex flex-col lg:flex-row gap-12 items-start">
-        
-        {/* Main Donut Chart - Reader Style */}
-        <div className="relative w-72 h-72 flex-shrink-0 mx-auto lg:mx-0">
-          <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-            <circle 
-              cx="50" cy="50" r="45" 
-              fill="none" 
-              stroke="#1f2937" 
-              strokeWidth="10"
-            />
-            
-            {(() => {
-              const admins = allUsers.filter(u => u.role === 'admin').length;
-              const librarians = allUsers.filter(u => u.role === 'librarian').length;
-              const readers = allUsers.filter(u => !u.role || u.role === 'reader').length;
-              
-              const totalUsers = allUsers.length || 1;
-              let offset = 0;
-              const colors = ["#ef4444", "#a855f7", "#22d3ee"];
+            {isLoading ? (
+              <div className="h-80 flex items-center justify-center">
+                <p className="text-slate-500 font-mono">Loading system telemetry...</p>
+              </div>
+            ) : (
+              <div className="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-16">
 
-              const segments = [
-                { name: "Admins", value: admins, color: colors[0] },
-                { name: "Librarians", value: librarians, color: colors[1] },
-                { name: "Readers", value: readers, color: colors[2] }
-              ].filter(s => s.value > 0);
+                {/* Donut Chart */}
+                <div className="relative w-72 h-72 flex-shrink-0">
+                  <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                    <circle
+                      cx="50" cy="50" r="45"
+                      fill="none"
+                      stroke="#1f2937"
+                      strokeWidth="11"
+                    />
 
-              return segments.map((seg, index) => {
-                const perc = (seg.value / totalUsers) * 100;
-                const circumference = 2 * Math.PI * 45;
-                const strokeDasharray = `${(perc / 100) * circumference} ${circumference}`;
-                const currentOffset = offset;
-                offset += perc * 3.6;
+                    {(() => {
+                      const admins = allUsers.filter(u => u.role === 'admin').length;
+                      const librarians = allUsers.filter(u => u.role === 'librarian').length;
+                      const readers = allUsers.filter(u => !u.role || u.role === 'reader').length;
 
-                return (
-                  <circle
-                    key={index}
-                    cx="50" cy="50" r="45"
-                    fill="none"
-                    stroke={seg.color}
-                    strokeWidth="10"
-                    strokeDasharray={strokeDasharray}
-                    strokeDashoffset={currentOffset}
-                    strokeLinecap="round"
-                    className="transition-all duration-700"
-                  />
-                );
-              });
-            })()}
-          </svg>
+                      const totalUsers = allUsers.length || 1;
+                      let offset = -90;
+                      const colors = ["#ef4444", "#a855f7", "#22d3ee"]; // Red, Purple, Cyan
 
-          {/* Center Content */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <p className="text-red-400 text-xs font-mono tracking-widest">TOTAL USERS</p>
-            <p className="text-5xl font-black text-white mt-1">
-              {allUsers.length}
-            </p>
-            <p className="text-slate-400 text-sm mt-1">
-              Active Accounts
-            </p>
-          </div>
-        </div>
+                      const segments = [
+                        { name: "Admins", value: admins, color: colors[0] },
+                        { name: "Librarians", value: librarians, color: colors[1] },
+                        { name: "Readers", value: readers, color: colors[2] }
+                      ].filter(s => s.value > 0);
 
-        {/* Breakdown - Reader Style (Small Circles) */}
-        <div className="flex-1 max-w-md">
-          <p className="text-xs uppercase tracking-widest text-slate-500 mb-6 font-mono">
-            USER ROLE DISTRIBUTION
-          </p>
-          
-          <div className="space-y-6">
-            {(() => {
-              const admins = allUsers.filter(u => u.role === 'admin').length;
-              const librarians = allUsers.filter(u => u.role === 'librarian').length;
-              const readers = allUsers.filter(u => !u.role || u.role === 'reader').length;
-              const total = allUsers.length || 1;
-              const colors = ["#ef4444", "#a855f7", "#22d3ee"];
+                      return segments.map((seg, index) => {
+                        const perc = (seg.value / totalUsers) * 100;
+                        const circumference = 2 * Math.PI * 45;
+                        const dash = `${(perc / 100) * circumference} ${circumference}`;
+                        const currentOffset = offset;
+                        offset += perc * 3.6;
 
-              const items = [
-                { name: "Administrators", value: admins, color: colors[0] },
-                { name: "Librarians", value: librarians, color: colors[1] },
-                { name: "Readers", value: readers, color: colors[2] }
-              ].filter(item => item.value > 0);
+                        return (
+                          <circle
+                            key={index}
+                            cx="50" cy="50" r="45"
+                            fill="none"
+                            stroke={seg.color}
+                            strokeWidth="11"
+                            strokeDasharray={dash}
+                            strokeDashoffset={currentOffset}
+                            strokeLinecap="round"
+                            className="transition-all duration-700"
+                          />
+                        );
+                      });
+                    })()}
+                  </svg>
 
-              return items.map((item, index) => {
-                const percent = Math.round((item.value / total) * 100);
-                return (
-                  <div key={index} className="flex items-center gap-5">
-                    {/* Small Circular Progress */}
-                    <div className="relative w-12 h-12 flex-shrink-0">
-                      <svg className="w-full h-full" viewBox="0 0 36 36">
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#1f2937"
-                          strokeWidth="3.5"
-                        />
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke={item.color}
-                          strokeWidth="3.5"
-                          strokeDasharray={`${percent}, 100`}
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
-                        {percent}%
-                      </div>
+                  {/* Center */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                    <p className="text-red-400 text-xs font-mono tracking-widest">TOTAL USERS</p>
+                    <p className="text-6xl font-black text-white mt-1 tracking-tighter">
+                      {allUsers.length}
+                    </p>
+                    <p className="text-slate-400 text-sm mt-1">Active Accounts</p>
+                  </div>
+                </div>
+
+                {/* Breakdown Section */}
+                <div className="flex-1 max-w-md">
+                  <p className="text-xs uppercase tracking-widest text-slate-500 mb-6 font-mono">
+                    USER ROLE DISTRIBUTION
+                  </p>
+
+                  <div className="space-y-6">
+                    {(() => {
+                      const admins = allUsers.filter(u => u.role === 'admin').length;
+                      const librarians = allUsers.filter(u => u.role === 'librarian').length;
+                      const readers = allUsers.filter(u => !u.role || u.role === 'reader').length;
+                      const total = allUsers.length || 1;
+                      const colors = ["#ef4444", "#a855f7", "#22d3ee"];
+
+                      const items = [
+                        { name: "Administrators", value: admins, color: colors[0] },
+                        { name: "Librarians", value: librarians, color: colors[1] },
+                        { name: "Readers", value: readers, color: colors[2] }
+                      ].filter(item => item.value > 0);
+
+                      return items.map((item, index) => {
+                        const percent = Math.round((item.value / total) * 100);
+                        return (
+                          <div key={index} className="flex items-center gap-5">
+                            <div className="relative w-11 h-11 flex-shrink-0">
+                              <svg className="w-full h-full" viewBox="0 0 36 36">
+                                <path
+                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none"
+                                  stroke="#1f2937"
+                                  strokeWidth="3.5"
+                                />
+                                <path
+                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none"
+                                  stroke={item.color}
+                                  strokeWidth="3.5"
+                                  strokeDasharray={`${percent}, 100`}
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                              <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
+                                {percent}%
+                              </div>
+                            </div>
+
+                            <div className="flex-1">
+                              <p className="text-white font-medium">{item.name}</p>
+                              <p className="text-xs text-slate-500 font-mono">System Access Level</p>
+                            </div>
+
+                            <div className="text-right font-mono">
+                              <p className="text-2xl font-black text-white">{item.value}</p>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+
+                  {/* Bottom Stats */}
+                  <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/10 mt-8">
+                    <div className="text-center">
+                      <p className="text-4xl font-black text-amber-400">{pendingApprovals}</p>
+                      <p className="text-xs text-slate-500 mt-2">PENDING APPROVALS</p>
                     </div>
-
-                    <div className="flex-1">
-                      <p className="text-white font-medium text-base">{item.name}</p>
-                      <p className="text-xs text-slate-500 font-mono">System Access Level</p>
-                    </div>
-
-                    <div className="text-right">
-                      <p className="text-3xl font-black text-white">{item.value}</p>
+                    <div className="text-center">
+                      <p className="text-4xl font-black text-emerald-400">
+                        ${allTransactions.reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0).toFixed(2)}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-2">TOTAL REVENUE</p>
                     </div>
                   </div>
-                );
-              });
-            })()}
+                </div>
+              </div>
+            )}
           </div>
-
-          {/* Extra Stats */}
-          <div className="mt-10 pt-6 border-t border-white/10 grid grid-cols-2 gap-6 text-center">
-            <div>
-              <p className="text-3xl font-black text-amber-400">{pendingApprovals}</p>
-              <p className="text-xs text-slate-500 mt-1">Pending Approvals</p>
-            </div>
-            <div>
-              <p className="text-3xl font-black text-emerald-400">
-                ${allTransactions.reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0).toFixed(2)}
-              </p>
-              <p className="text-xs text-slate-500 mt-1">Total Revenue</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    )}
-  </div>
-)}
+        )}
 
         {activeTab === 'manage-books' && (
           <div className="bg-slate-900/50 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
@@ -447,9 +444,8 @@ export default function AdminDashboard() {
                         <td className="p-4 text-slate-400">{book.author}</td>
                         <td className="p-4 text-slate-400">{book.category}</td>
                         <td className="p-4">
-                          <span className={`px-2 py-0.5 text-[10px] border font-bold uppercase tracking-wider rounded-md ${
-                            book.status === 'Pending Approval' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                          }`}>{book.status}</span>
+                          <span className={`px-2 py-0.5 text-[10px] border font-bold uppercase tracking-wider rounded-md ${book.status === 'Pending Approval' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            }`}>{book.status}</span>
                         </td>
                         <td className="p-4 text-right space-x-2">
                           {book.status === 'Pending Approval' && (
@@ -494,11 +490,10 @@ export default function AdminDashboard() {
                       <tr key={user._id} className="hover:bg-white/2 transition-colors">
                         <td className="p-4 font-mono text-white">{user.email}</td>
                         <td className="p-4">
-                          <span className={`px-2 py-0.5 text-[10px] border font-bold uppercase tracking-wider rounded-md ${
-                            user.role === 'admin' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                            user.role === 'librarian' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
-                            'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                          }`}>{user.role || 'reader'}</span>
+                          <span className={`px-2 py-0.5 text-[10px] border font-bold uppercase tracking-wider rounded-md ${user.role === 'admin' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                              user.role === 'librarian' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
+                                'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                            }`}>{user.role || 'reader'}</span>
                         </td>
                         <td className="p-4 text-right space-x-2">
                           {user.role !== 'admin' && (
