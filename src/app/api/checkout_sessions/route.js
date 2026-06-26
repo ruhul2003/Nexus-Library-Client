@@ -5,7 +5,20 @@ import { stripe } from '../../../lib/stripe';
 export async function POST(request) {
   try {
     const headersList = await headers();
-    const origin = process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
+    
+    // === Improved Origin Logic ===
+    let origin = process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
+
+    // Extra fallback (Vercel-এ env var না লোড হলে)
+    if (!origin || !origin.startsWith('https://')) {
+      const host = headersList.get('host');
+      const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+      origin = `${protocol}://${host}`;
+      
+      console.warn('⚠️ Using dynamic origin fallback:', origin);
+    }
+
+    console.log('✅ Checkout Origin Used:', origin); // Vercel log-এ দেখতে পাবেন
 
     const formData = await request.formData();
     const bookId = formData.get('bookId');
@@ -28,7 +41,9 @@ export async function POST(request) {
     
     const price = parseFloat(book.price || book.fee || 9.99);
 
-    const validEmail = userEmail && userEmail.trim() !== '' ? userEmail.trim().toLowerCase() : 'unknown@system.com';
+    const validEmail = userEmail && userEmail.trim() !== '' 
+      ? userEmail.trim().toLowerCase() 
+      : 'unknown@system.com';
 
     const session = await stripe.checkout.sessions.create({
       customer_email: validEmail !== 'unknown@system.com' ? validEmail : undefined, 
@@ -58,6 +73,10 @@ export async function POST(request) {
       },
     });
 
+    console.log('✅ Stripe Session Created:', { 
+      sessionId: session.id, 
+      successUrl: session.success_url 
+    });
 
     return NextResponse.redirect(session.url, { status: 303 });
 
