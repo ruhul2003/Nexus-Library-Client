@@ -312,7 +312,7 @@ export default function UserReaderDashboard() {
           </div>
         </div>
 
- {activeTab === 'overview' && (
+{activeTab === 'overview' && (
   <div className="space-y-6">
     <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 font-mono">
       Core Investment Activity Node
@@ -326,7 +326,7 @@ export default function UserReaderDashboard() {
       <div className="bg-slate-900/20 border border-white/10 rounded-3xl p-8 backdrop-blur-md">
         <div className="flex flex-col lg:flex-row items-center justify-center gap-10">
           
-          {/* Main Donut Chart */}
+          {/* Main Donut Chart - Merged by Title */}
           <div className="relative w-64 h-64 flex-shrink-0">
             <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
               <circle 
@@ -337,15 +337,24 @@ export default function UserReaderDashboard() {
               />
               
               {(() => {
-                // Group by title to assign consistent colors
+                // Group by title and sum fees
+                const grouped = enrichedDeliveryHistory.reduce((acc, order) => {
+                  const title = order.title?.trim() || "Unknown";
+                  if (!acc[title]) {
+                    acc[title] = { title, fee: 0 };
+                  }
+                  acc[title].fee += Number(order.fee) || 0;
+                  return acc;
+                }, {});
+
+                const groupedArray = Object.values(grouped);
                 const colorMap = new Map();
                 const colors = ["#6366f1", "#a855f7", "#22d3ee", "#ec4899", "#eab308"];
-                
                 let colorIndex = 0;
-                enrichedDeliveryHistory.forEach(order => {
-                  const title = order.title?.trim() || "Unknown";
-                  if (!colorMap.has(title)) {
-                    colorMap.set(title, colors[colorIndex % colors.length]);
+
+                groupedArray.forEach(item => {
+                  if (!colorMap.has(item.title)) {
+                    colorMap.set(item.title, colors[colorIndex % colors.length]);
                     colorIndex++;
                   }
                 });
@@ -353,15 +362,12 @@ export default function UserReaderDashboard() {
                 const total = totalFeesSpent || 1;
                 let offset = 0;
 
-                return enrichedDeliveryHistory.map((order, index) => {
-                  const fee = Number(order.fee) || 0;
-                  const percentage = (fee / total) * 100;
+                return groupedArray.map((item, index) => {
+                  const percentage = (item.fee / total) * 100;
                   const circumference = 2 * Math.PI * 45;
                   const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
                   
-                  const title = order.title?.trim() || "Unknown";
-                  const strokeColor = colorMap.get(title);
-
+                  const strokeColor = colorMap.get(item.title);
                   const currentOffset = offset;
                   offset += percentage * 3.6;
 
@@ -394,72 +400,71 @@ export default function UserReaderDashboard() {
             </div>
           </div>
 
-          {/* Legend + Individual Circles */}
+          {/* Legend - Grouped by Title */}
           <div className="flex-1 max-w-md">
             <p className="text-xs uppercase tracking-widest text-slate-500 mb-4 font-mono">Spending Breakdown</p>
             
             <div className="space-y-5">
-              {enrichedDeliveryHistory.slice(0, 6).map((order, index) => {
-                const fee = Number(order.fee) || 0;
-                const total = totalFeesSpent || 1;
-                const percent = Math.round((fee / total) * 100);
+              {(() => {
+                const grouped = enrichedDeliveryHistory.reduce((acc, order) => {
+                  const title = order.title?.trim() || "Unknown";
+                  if (!acc[title]) {
+                    acc[title] = { title, fee: 0, status: order.status };
+                  }
+                  acc[title].fee += Number(order.fee) || 0;
+                  return acc;
+                }, {});
 
-                // Same color logic for legend
+                const groupedArray = Object.values(grouped)
+                  .sort((a, b) => b.fee - a.fee)
+                  .slice(0, 6);
+
                 const colorMap = new Map();
                 const colors = ["#6366f1", "#a855f7", "#22d3ee", "#ec4899", "#eab308"];
                 let colorIndex = 0;
-                enrichedDeliveryHistory.forEach(o => {
-                  const t = o.title?.trim() || "Unknown";
-                  if (!colorMap.has(t)) {
-                    colorMap.set(t, colors[colorIndex % colors.length]);
+
+                groupedArray.forEach(item => {
+                  if (!colorMap.has(item.title)) {
+                    colorMap.set(item.title, colors[colorIndex % colors.length]);
                     colorIndex++;
                   }
                 });
 
-                const title = order.title?.trim() || "Unknown";
-                const strokeColor = colorMap.get(title);
+                return groupedArray.map((item, index) => {
+                  const total = totalFeesSpent || 1;
+                  const percent = Math.round((item.fee / total) * 100);
+                  const strokeColor = colorMap.get(item.title);
 
-                return (
-                  <div key={index} className="flex items-center gap-4">
-                    <div className="relative w-11 h-11 flex-shrink-0">
-                      <svg className="w-full h-full" viewBox="0 0 36 36">
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#1f2937"
-                          strokeWidth="3"
-                        />
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke={strokeColor}
-                          strokeWidth="3"
-                          strokeDasharray={`${percent}, 100`}
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
-                        {percent}%
+                  return (
+                    <div key={index} className="flex items-center gap-4">
+                      <div className="relative w-11 h-11 flex-shrink-0">
+                        <svg className="w-full h-full" viewBox="0 0 36 36">
+                          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#1f2937" strokeWidth="3"/>
+                          <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={strokeColor} strokeWidth="3" strokeDasharray={`${percent}, 100`} strokeLinecap="round"/>
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
+                          {percent}%
+                        </div>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white line-clamp-1">
+                          {item.title}
+                        </p>
+                        <p className="text-xs text-slate-500 font-mono">
+                          ${item.fee.toFixed(2)}
+                        </p>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="text-xs bg-white/5 px-2.5 py-1 rounded-full text-slate-400">
+                          {item.status}
+                        </span>
                       </div>
                     </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white line-clamp-1">
-                        {order.title}
-                      </p>
-                      <p className="text-xs text-slate-500 font-mono">
-                        ${fee.toFixed(2)}
-                      </p>
-                    </div>
-
-                    <div className="text-right">
-                      <span className="text-xs bg-white/5 px-2.5 py-1 rounded-full text-slate-400">
-                        {order.status}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </div>
           </div>
         </div>
