@@ -266,155 +266,162 @@ export default function AdminDashboard() {
         </div>
 
         {activeTab === 'overview' && (
-          <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-8 backdrop-blur-md">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-8">
-              System Overview Matrix
-            </h3>
+  <div className="bg-slate-900/40 border border-white/10 rounded-3xl p-8 backdrop-blur-md">
+    <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-8">
+      System Overview Matrix
+    </h3>
 
-            {isLoading ? (
-              <div className="h-80 flex items-center justify-center">
-                <p className="text-slate-500 font-mono">Loading system telemetry...</p>
-              </div>
-            ) : (
-              <div className="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-16">
+    {isLoading ? (
+      <div className="h-80 flex items-center justify-center">
+        <p className="text-slate-500 font-mono">Loading system telemetry...</p>
+      </div>
+    ) : (
+      <div className="flex flex-col lg:flex-row items-center justify-center gap-10">
 
-                {/* Donut Chart */}
-                <div className="relative w-72 h-72 flex-shrink-0">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                    <circle
-                      cx="50" cy="50" r="45"
-                      fill="none"
-                      stroke="#1f2937"
-                      strokeWidth="11"
-                    />
+        {/* Main Donut Chart */}
+        <div className="relative w-64 h-64 flex-shrink-0">
+          <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+            <circle 
+              cx="50" cy="50" r="45" 
+              fill="none" 
+              stroke="#1f2937" 
+              strokeWidth="8"
+            />
+            
+            {(() => {
+              const admins = allUsers.filter(u => u.role === 'admin').length;
+              const librarians = allUsers.filter(u => u.role === 'librarian').length;
+              const readers = allUsers.filter(u => !u.role || u.role === 'reader').length;
 
-                    {(() => {
-                      const admins = allUsers.filter(u => u.role === 'admin').length;
-                      const librarians = allUsers.filter(u => u.role === 'librarian').length;
-                      const readers = allUsers.filter(u => !u.role || u.role === 'reader').length;
+              const totalUsers = allUsers.length || 1;
+              let offset = 0;
+              const colors = ["#ef4444", "#a855f7", "#22d3ee"];
 
-                      const totalUsers = allUsers.length || 1;
-                      let offset = -90;
-                      const colors = ["#ef4444", "#a855f7", "#22d3ee"]; // Red, Purple, Cyan
+              const segments = [
+                { name: "Admins", value: admins, color: colors[0] },
+                { name: "Librarians", value: librarians, color: colors[1] },
+                { name: "Readers", value: readers, color: colors[2] }
+              ].filter(s => s.value > 0);
 
-                      const segments = [
-                        { name: "Admins", value: admins, color: colors[0] },
-                        { name: "Librarians", value: librarians, color: colors[1] },
-                        { name: "Readers", value: readers, color: colors[2] }
-                      ].filter(s => s.value > 0);
+              return segments.map((seg, index) => {
+                const percentage = (seg.value / totalUsers) * 100;
+                const circumference = 2 * Math.PI * 45;
+                const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
+                
+                const currentOffset = offset;
+                offset += percentage * 3.6;
 
-                      return segments.map((seg, index) => {
-                        const perc = (seg.value / totalUsers) * 100;
-                        const circumference = 2 * Math.PI * 45;
-                        const dash = `${(perc / 100) * circumference} ${circumference}`;
-                        const currentOffset = offset;
-                        offset += perc * 3.6;
+                return (
+                  <circle
+                    key={index}
+                    cx="50" cy="50" r="45"
+                    fill="none"
+                    stroke={seg.color}
+                    strokeWidth="8"
+                    strokeDasharray={strokeDasharray}
+                    strokeDashoffset={currentOffset}
+                    strokeLinecap="round"
+                    className="transition-all duration-700"
+                  />
+                );
+              });
+            })()}
+          </svg>
 
-                        return (
-                          <circle
-                            key={index}
-                            cx="50" cy="50" r="45"
-                            fill="none"
-                            stroke={seg.color}
-                            strokeWidth="11"
-                            strokeDasharray={dash}
-                            strokeDashoffset={currentOffset}
-                            strokeLinecap="round"
-                            className="transition-all duration-700"
-                          />
-                        );
-                      });
-                    })()}
-                  </svg>
-
-                  {/* Center */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                    <p className="text-red-400 text-xs font-mono tracking-widest">TOTAL USERS</p>
-                    <p className="text-6xl font-black text-white mt-1 tracking-tighter">
-                      {allUsers.length}
-                    </p>
-                    <p className="text-slate-400 text-sm mt-1">Active Accounts</p>
-                  </div>
-                </div>
-
-                {/* Breakdown Section */}
-                <div className="flex-1 max-w-md">
-                  <p className="text-xs uppercase tracking-widest text-slate-500 mb-6 font-mono">
-                    USER ROLE DISTRIBUTION
-                  </p>
-
-                  <div className="space-y-6">
-                    {(() => {
-                      const admins = allUsers.filter(u => u.role === 'admin').length;
-                      const librarians = allUsers.filter(u => u.role === 'librarian').length;
-                      const readers = allUsers.filter(u => !u.role || u.role === 'reader').length;
-                      const total = allUsers.length || 1;
-                      const colors = ["#ef4444", "#a855f7", "#22d3ee"];
-
-                      const items = [
-                        { name: "Administrators", value: admins, color: colors[0] },
-                        { name: "Librarians", value: librarians, color: colors[1] },
-                        { name: "Readers", value: readers, color: colors[2] }
-                      ].filter(item => item.value > 0);
-
-                      return items.map((item, index) => {
-                        const percent = Math.round((item.value / total) * 100);
-                        return (
-                          <div key={index} className="flex items-center gap-5">
-                            <div className="relative w-11 h-11 flex-shrink-0">
-                              <svg className="w-full h-full" viewBox="0 0 36 36">
-                                <path
-                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                  fill="none"
-                                  stroke="#1f2937"
-                                  strokeWidth="3.5"
-                                />
-                                <path
-                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                  fill="none"
-                                  stroke={item.color}
-                                  strokeWidth="3.5"
-                                  strokeDasharray={`${percent}, 100`}
-                                  strokeLinecap="round"
-                                />
-                              </svg>
-                              <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
-                                {percent}%
-                              </div>
-                            </div>
-
-                            <div className="flex-1">
-                              <p className="text-white font-medium">{item.name}</p>
-                              <p className="text-xs text-slate-500 font-mono">System Access Level</p>
-                            </div>
-
-                            <div className="text-right font-mono">
-                              <p className="text-2xl font-black text-white">{item.value}</p>
-                            </div>
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
-
-                  {/* Bottom Stats */}
-                  <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/10 mt-8">
-                    <div className="text-center">
-                      <p className="text-4xl font-black text-amber-400">{pendingApprovals}</p>
-                      <p className="text-xs text-slate-500 mt-2">PENDING APPROVALS</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-4xl font-black text-emerald-400">
-                        ${allTransactions.reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0).toFixed(2)}
-                      </p>
-                      <p className="text-xs text-slate-500 mt-2">TOTAL REVENUE</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+          {/* Center Content */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <p className="text-red-400 text-xs font-mono tracking-widest">TOTAL USERS</p>
+            <p className="text-4xl font-black text-white mt-1">
+              {allUsers.length}
+            </p>
+            <p className="text-slate-400 text-sm font-medium mt-1">
+              Active Accounts
+            </p>
           </div>
-        )}
+        </div>
+
+        {/* Breakdown Section */}
+        <div className="flex-1 max-w-md">
+          <p className="text-xs uppercase tracking-widest text-slate-500 mb-4 font-mono">
+            USER ROLE DISTRIBUTION
+          </p>
+          
+          <div className="space-y-5">
+            {(() => {
+              const admins = allUsers.filter(u => u.role === 'admin').length;
+              const librarians = allUsers.filter(u => u.role === 'librarian').length;
+              const readers = allUsers.filter(u => !u.role || u.role === 'reader').length;
+              const total = allUsers.length || 1;
+              const colors = ["#ef4444", "#a855f7", "#22d3ee"];
+
+              const items = [
+                { name: "Administrators", value: admins, color: colors[0] },
+                { name: "Librarians", value: librarians, color: colors[1] },
+                { name: "Readers", value: readers, color: colors[2] }
+              ].filter(item => item.value > 0);
+
+              return items.map((item, index) => {
+                const percent = Math.round((item.value / total) * 100);
+                return (
+                  <div key={index} className="flex items-center gap-4">
+                    <div className="relative w-11 h-11 flex-shrink-0">
+                      <svg className="w-full h-full" viewBox="0 0 36 36">
+                        <path
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke="#1f2937"
+                          strokeWidth="3"
+                        />
+                        <path
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke={item.color}
+                          strokeWidth="3"
+                          strokeDasharray={`${percent}, 100`}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
+                        {percent}%
+                      </div>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white line-clamp-1">
+                        {item.name}
+                      </p>
+                      <p className="text-xs text-slate-500 font-mono">
+                        System Access Level
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="text-2xl font-black text-white">{item.value}</p>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+
+          {/* Bottom Stats */}
+          <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/10 mt-8">
+            <div className="text-center">
+              <p className="text-4xl font-black text-amber-400">{pendingApprovals}</p>
+              <p className="text-xs text-slate-500 mt-2">PENDING APPROVALS</p>
+            </div>
+            <div className="text-center">
+              <p className="text-4xl font-black text-emerald-400">
+                ${allTransactions.reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0).toFixed(2)}
+              </p>
+              <p className="text-xs text-slate-500 mt-2">TOTAL REVENUE</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+)}
 
         {activeTab === 'manage-books' && (
           <div className="bg-slate-900/50 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
