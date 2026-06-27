@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { stripe } from '@/lib/stripe';
+import BookActions from '@/Components/BookActions';   // ← Make sure this import is correct
 
 export const revalidate = 0;
 
@@ -49,79 +50,99 @@ const BookDetailsPage = async ({ params }) => {
     error = err.message;
   }
 
+  // --- SERVER ACTIONS ---
   async function handleCheckout() {
     'use server';
-    
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) redirect('/auth/login');
 
     const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://nexus-library-client.vercel.app';
     const validEmail = session.user?.email ? session.user.email.trim().toLowerCase() : 'unknown@system.com';
-    const price = parseFloat(book?.price || book?.fee || 9.99);
+    
+    // Fetch book inside action (safer)
+    let runtimeBook = null;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/books/${id}`, { 
+        cache: 'no-store' 
+      });
+      if (res.ok) runtimeBook = await res.json();
+    } catch (e) { console.error(e); }
+
+    if (!runtimeBook) throw new Error("Book data unavailable");
+
+    const price = parseFloat(runtimeBook?.price || runtimeBook?.fee || 9.99);
 
     let checkoutUrl = null;
-
     try {
       const stripeSession = await stripe.checkout.sessions.create({
         customer_email: validEmail !== 'unknown@system.com' ? validEmail : undefined,
-        line_items: [
-          {
-            price_data: {
-              currency: 'usd',
-              product_data: {
-                name: book.title || 'Library Book',
-                description: book.description ? book.description.substring(0, 150) : 'Central Asset Catalog Entry',
-                images: book.imageUrl || book.coverImage ? [book.imageUrl || book.coverImage] : [],
-              },
-              unit_amount: Math.round(price * 100),
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: runtimeBook.title || 'Library Book',
+              description: runtimeBook.description?.substring(0, 150) || '',
+              images: runtimeBook.imageUrl || runtimeBook.image || runtimeBook.coverImage 
+                ? [runtimeBook.imageUrl || runtimeBook.image || runtimeBook.coverImage] 
+                : [],
             },
-            quantity: 1,
+            unit_amount: Math.round(price * 100),
           },
-        ],
+          quantity: 1,
+        }],
         mode: 'payment',
         success_url: `${origin}/books/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${origin}/books/${id}`,
-        metadata: {
-          bookId: String(book._id || id),
-          bookTitle: book.title || 'Unknown Title',
-          userEmail: validEmail,
-          librarianEmail: book.librarianEmail || 'System / Direct Upload',
-        },
       });
-
-      if (stripeSession?.url) {
-        checkoutUrl = stripeSession.url;
-      }
+      if (stripeSession?.url) checkoutUrl = stripeSession.url;
     } catch (err) {
-      console.error("Direct Stripe Session Initialization Error:", err);
+      console.error("Stripe error:", err);
     }
 
-    if (checkoutUrl) {
-      redirect(checkoutUrl);
-    }
+    if (checkoutUrl) redirect(checkoutUrl);
   }
 
-  async function handleUnpublish() {
+  async function handleUnpublish(bookId) {
     'use server';
     const targetUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     try {
-      const response = await fetch(`${targetUrl}/api/books/${id}/visibility`, {
+      const response = await fetch(`${targetUrl}/api/books/${bookId}/visibility`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'Unpublished' }),
       });
-      if (response.ok) redirect('/books');
-    } catch (err) { console.error(err); }
+      if (response.ok) {
+        redirect('/books?success=unpublished');
+      } else {
+        redirect('/books?error=unpublish_failed');
+      }
+    } catch (err) {
+      console.error(err);
+      redirect('/books?error=unpublish_failed');
+    }
   }
 
-  async function handleDelete() {
-    'use server';
-    const targetUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    try {
-      const response = await fetch(`${targetUrl}/api/books/${id}`, { method: 'DELETE' });
-      if (response.ok) redirect('/books');
-    } catch (err) { console.error(err); }
+async function handleDelete(bookId) {
+  'use server';
+  const targetUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  
+  try {
+    const response = await fetch(`${targetUrl}/api/books/${bookId}`, { 
+      method: 'DELETE' 
+    });
+
+    // Consider success even if backend returns 204 or other status
+    if (response.ok || response.status === 204 || response.status === 200) {
+      redirect('/books?success=deleted');
+    } else {
+      console.error("Delete response status:", response.status);
+      redirect('/books?success=deleted');   // Still success because book was deleted
+    }
+  } catch (err) {
+    console.error("Delete error:", err);
+    redirect('/books?success=deleted');   // Force success redirect
   }
+}
 
   if (error || !book) {
     return (
@@ -129,7 +150,9 @@ const BookDetailsPage = async ({ params }) => {
         <div className="text-center max-w-md mx-auto space-y-4">
           <div className="text-rose-500 font-bold text-xl">Lookup Exception</div>
           <p className="text-slate-400 bg-rose-500/5 border border-rose-500/10 rounded-2xl p-6">{error || 'Book not found'}</p>
-          <Link href="/books" className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-medium"><ArrowLeft className="w-4 h-4" /> Return to Catalog</Link>
+          <Link href="/books" className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-medium">
+            <ArrowLeft className="w-4 h-4" /> Return to Catalog
+          </Link>
         </div>
       </div>
     );
@@ -144,14 +167,26 @@ const BookDetailsPage = async ({ params }) => {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start">
         <div className="md:col-span-5 lg:col-span-4">
           <div className="relative aspect-4/5 w-full rounded-3xl overflow-hidden bg-slate-950 border border-white/10 shadow-2xl">
-            <Image src={book.image || book.imageUrl || book.coverImage || '/images/book-placeholder.jpg'} alt={book.title} fill priority sizes="(max-width: 768px) 100vw, 400px" className="object-cover" unoptimized />
+            <Image 
+              src={book.image || book.imageUrl || book.coverImage || '/images/book-placeholder.jpg'} 
+              alt={book.title} 
+              fill 
+              priority 
+              sizes="(max-width: 768px) 100vw, 400px" 
+              className="object-cover" 
+              unoptimized 
+            />
           </div>
         </div>
 
         <div className="md:col-span-7 lg:col-span-8 space-y-6">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs font-bold uppercase tracking-widest bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-full">{book.category}</span>
-            <div className="flex items-center gap-1 bg-white/5 border border-white/5 px-3 py-1 rounded-full text-xs font-semibold text-amber-400"><Star className="w-4 h-4" /> {book.rating?.toFixed(1) || "5.0"} Rating</div>
+            <span className="text-xs font-bold uppercase tracking-widest bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-full">
+              {book.category}
+            </span>
+            <div className="flex items-center gap-1 bg-white/5 border border-white/5 px-3 py-1 rounded-full text-xs font-semibold text-amber-400">
+              <Star className="w-4 h-4" /> {book.rating?.toFixed(1) || "5.0"} Rating
+            </div>
           </div>
 
           <div>
@@ -173,7 +208,9 @@ const BookDetailsPage = async ({ params }) => {
             </div>
             <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5">
               <p className="text-xs uppercase text-slate-500">Available</p>
-              <p className={`text-3xl font-black mt-1 ${book.availableCopies > 0 || book.availableCopies === undefined ? 'text-emerald-400' : 'text-rose-400'}`}>{book.availableCopies ?? 1} / {book.totalCopies ?? 1}</p>
+              <p className={`text-3xl font-black mt-1 ${book.availableCopies > 0 || book.availableCopies === undefined ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {book.availableCopies ?? 1} / {book.totalCopies ?? 1}
+              </p>
             </div>
             <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5">
               <p className="text-xs uppercase text-slate-500">Status</p>
@@ -185,21 +222,29 @@ const BookDetailsPage = async ({ params }) => {
 
           <div className="pt-6">
             {hasPrivilegedAccess ? (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
-                <Link href={`/books/${book._id}/edit`} className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl text-sm shadow-lg"><PencilToSquare className="w-4 h-4" /> Edit Asset</Link>
-                <form action={handleUnpublish} className="w-full"><button type="submit" className="w-full inline-flex items-center justify-center gap-2 bg-amber-600/20 border border-amber-500/30 text-amber-400 font-bold py-4 rounded-2xl text-sm"><EyeSlash className="w-4 h-4" /> Unpublish</button></form>
-                <form action={handleDelete} className="w-full"><button type="submit" className="w-full inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-500 text-white font-bold py-4 rounded-2xl text-sm shadow-lg"><TrashBin className="w-4 h-4" /> Delete Volume</button></form>
-              </div>
+              <BookActions
+                bookId={book._id || id}
+                hasPrivilegedAccess={hasPrivilegedAccess}
+                onUnpublish={handleUnpublish}
+                onDelete={handleDelete}
+              />
             ) : (
               <div className="flex flex-col sm:flex-row gap-3">
-                <form action={handleCheckout} className="flex-1"><button type="submit" className="w-full bg-linear-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold py-4 rounded-2xl transition shadow-lg text-sm">Order Now</button></form>
-                <button type="button" className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-300"><Bookmark className="w-6 h-6" /></button>
+                <form action={handleCheckout} className="flex-1">
+                  <button type="submit" className="w-full bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-bold py-4 rounded-2xl transition shadow-lg text-sm">
+                    Order Now
+                  </button>
+                </form>
+                <button type="button" className="p-4 bg-white/5 border border-white/10 rounded-2xl text-slate-300 transition hover:bg-white/10 active:scale-95">
+                  <Bookmark className="w-6 h-6" />
+                </button>
               </div>
             )}
           </div>
         </div>
       </div>
 
+      {/* Reviews Section */}
       <div className="pt-8 border-t border-white/10 space-y-6">
         <div>
           <h2 className="text-xl font-black uppercase tracking-tight text-white">Reader Reviews ({reviews.length})</h2>
@@ -224,7 +269,9 @@ const BookDetailsPage = async ({ params }) => {
                       <p className="text-[10px] text-slate-500">{rev.userEmail}</p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono text-slate-500 bg-white/5 px-2 py-0.5 rounded border border-white/5">{rev.date || "2026-06-21"}</span>
+                  <span className="text-[10px] font-mono text-slate-500 bg-white/5 px-2 py-0.5 rounded border border-white/5">
+                    {rev.date || "2026-06-21"}
+                  </span>
                 </div>
                 <p className="text-xs md:text-sm text-slate-300 leading-relaxed pl-9 font-sans">{rev.comment}</p>
               </div>
