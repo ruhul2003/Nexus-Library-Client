@@ -1,12 +1,13 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft, Star, Bookmark, PencilToSquare, TrashBin, EyeSlash } from '@gravity-ui/icons';
+import { ArrowLeft, Star, Bookmark } from '@gravity-ui/icons';
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { stripe } from '@/lib/stripe';
-import BookActions from '@/Components/BookActions';   // ← Make sure this import is correct
+import BookActions from '@/Components/BookActions';
 
 export const revalidate = 0;
 
@@ -21,7 +22,6 @@ const BookDetailsPage = async ({ params }) => {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     const userRole = session?.user?.role?.toLowerCase();
-
     if (userRole === 'librarian' || userRole === 'admin') {
       hasPrivilegedAccess = true;
     }
@@ -50,16 +50,15 @@ const BookDetailsPage = async ({ params }) => {
     error = err.message;
   }
 
-  // --- SERVER ACTIONS ---
+  // ===================== SERVER ACTIONS =====================
   async function handleCheckout() {
     'use server';
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) redirect('/auth/login');
 
     const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://nexus-library-client.vercel.app';
-    const validEmail = session.user?.email ? session.user.email.trim().toLowerCase() : 'unknown@system.com';
-    
-    // Fetch book inside action (safer)
+    const validEmail = session.user?.email?.trim().toLowerCase() || 'unknown@system.com';
+
     let runtimeBook = null;
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/books/${id}`, { 
@@ -102,54 +101,27 @@ const BookDetailsPage = async ({ params }) => {
     if (checkoutUrl) redirect(checkoutUrl);
   }
 
-  async function handleUnpublish(bookId) {
+  async function handleDelete(bookId) {
     'use server';
     const targetUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     try {
-      const response = await fetch(`${targetUrl}/api/books/${bookId}/visibility`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'Unpublished' }),
-      });
-      if (response.ok) {
-        redirect('/books?success=unpublished');
-      } else {
-        redirect('/books?error=unpublish_failed');
-      }
+      await fetch(`${targetUrl}/api/books/${bookId}`, { method: 'DELETE' });
     } catch (err) {
       console.error(err);
-      redirect('/books?error=unpublish_failed');
     }
+    revalidatePath('/books');
+    redirect('/books?success=deleted');
   }
 
-async function handleDelete(bookId) {
-  'use server';
-  const targetUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-  
-  try {
-    const response = await fetch(`${targetUrl}/api/books/${bookId}`, { 
-      method: 'DELETE' 
-    });
-
-    // Consider success even if backend returns 204 or other status
-    if (response.ok || response.status === 204 || response.status === 200) {
-      redirect('/books?success=deleted');
-    } else {
-      console.error("Delete response status:", response.status);
-      redirect('/books?success=deleted');   // Still success because book was deleted
-    }
-  } catch (err) {
-    console.error("Delete error:", err);
-    redirect('/books?success=deleted');   // Force success redirect
-  }
-}
-
+  // ===================== RENDER =====================
   if (error || !book) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md mx-auto space-y-4">
           <div className="text-rose-500 font-bold text-xl">Lookup Exception</div>
-          <p className="text-slate-400 bg-rose-500/5 border border-rose-500/10 rounded-2xl p-6">{error || 'Book not found'}</p>
+          <p className="text-slate-400 bg-rose-500/5 border border-rose-500/10 rounded-2xl p-6">
+            {error || 'Book not found'}
+          </p>
           <Link href="/books" className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-medium">
             <ArrowLeft className="w-4 h-4" /> Return to Catalog
           </Link>
@@ -161,7 +133,8 @@ async function handleDelete(bookId) {
   return (
     <div className="w-full min-h-[80vh] max-w-6xl mx-auto pb-16 space-y-12 px-4">
       <Link href="/books" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-white transition group">
-        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Universal Catalog
+        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> 
+        Back to Universal Catalog
       </Link>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start">
@@ -225,7 +198,6 @@ async function handleDelete(bookId) {
               <BookActions
                 bookId={book._id || id}
                 hasPrivilegedAccess={hasPrivilegedAccess}
-                onUnpublish={handleUnpublish}
                 onDelete={handleDelete}
               />
             ) : (
