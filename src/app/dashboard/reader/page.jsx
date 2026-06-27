@@ -328,7 +328,14 @@ export default function UserReaderDashboard() {
       Core Investment Activity Node
     </h2>
 
-    {enrichedDeliveryHistory.length === 0 ? (
+    {isLoadingData ? (
+      // Loader for Overview Section
+      <div className="h-96 border border-dashed border-white/10 rounded-3xl flex flex-col items-center justify-center bg-slate-900/20 backdrop-blur-md">
+        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-xs font-mono tracking-widest text-slate-400 uppercase">Loading Investment Metrics...</p>
+        <p className="text-[10px] text-slate-500 mt-2">Enriching order data</p>
+      </div>
+    ) : enrichedDeliveryHistory.length === 0 ? (
       <div className="h-64 border border-dashed border-white/10 rounded-2xl flex items-center justify-center text-xs text-slate-600 font-mono uppercase">
         No telemetry metrics logged.
       </div>
