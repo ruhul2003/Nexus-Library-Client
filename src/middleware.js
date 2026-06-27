@@ -2,9 +2,16 @@ import { NextResponse } from 'next/server';
 
 export async function middleware(request) {
   const pathname = request.nextUrl.pathname;
+
+  if (request.headers.get("next-router-prefetch") === "1") {
+    return NextResponse.next();
+  }
+
   console.log("🔍 Middleware Hit:", pathname);
 
-  const sessionCookie = request.cookies.get("better-auth.session_token")?.value;
+  const sessionCookie = 
+    request.cookies.get("__Secure-better-auth.session_token")?.value || 
+    request.cookies.get("better-auth.session_token")?.value;
 
   if (!sessionCookie) {
     console.log("No session token found → Redirect to login");
@@ -13,9 +20,12 @@ export async function middleware(request) {
 
   try {
     const origin = request.nextUrl.origin;
+    
+    const cookieName = request.cookies.get("__Secure-better-auth.session_token") ? "__Secure-better-auth.session_token" : "better-auth.session_token";
+
     const sessionRes = await fetch(`${origin}/api/auth/get-session`, {
       headers: {
-        cookie: `better-auth.session_token=${sessionCookie}`,
+        cookie: `${cookieName}=${sessionCookie}`,
       },
     });
 
@@ -24,9 +34,12 @@ export async function middleware(request) {
     }
 
     const session = await sessionRes.json();
-    const userRole = session?.user?.role?.toLowerCase()?.trim() || 'reader';
+    
+    if (!session?.user) {
+      return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
 
-    console.log(`User Role: ${userRole} tries to access: ${pathname}`);
+    const userRole = session?.user?.role?.toLowerCase()?.trim() || 'reader';
 
     if (pathname.startsWith('/dashboard/admin') && userRole !== 'admin') {
       return NextResponse.redirect(new URL(`/dashboard/${userRole}`, request.url));
@@ -47,7 +60,7 @@ export async function middleware(request) {
     return NextResponse.next();
   } catch (error) {
     console.error("Fetch Error in Middleware:", error);
-    return NextResponse.next();
+    return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 }
 
