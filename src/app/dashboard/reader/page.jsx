@@ -288,6 +288,16 @@ export default function UserReaderDashboard() {
           </div>
         </div>
 
+        {/* Loading Spinner for Data Fetch */}
+        {isLoadingData && (
+          <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-xs font-mono tracking-widest text-slate-400 uppercase">Fetching Reader Data...</p>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div className="bg-slate-900/40 border border-white/10 p-5 rounded-2xl flex items-center gap-4 backdrop-blur-md">
             <CircleCheck className="w-5 h-5 text-emerald-400" />
