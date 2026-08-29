@@ -8,6 +8,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { stripe } from '@/lib/stripe';
 import BookActions from '@/Components/BookActions';
+import ReviewSection from '@/Components/ReviewSection';
 
 export const revalidate = 0;
 
@@ -216,41 +217,8 @@ const BookDetailsPage = async ({ params }) => {
         </div>
       </div>
 
-      {/* Reviews Section */}
-      <div className="pt-8 border-t border-white/10 space-y-6">
-        <div>
-          <h2 className="text-xl font-black uppercase tracking-tight text-white">Reader Reviews ({reviews.length})</h2>
-          <p className="text-xs text-slate-500">Authentic insights from clients who explored this volume.</p>
-        </div>
-
-        {reviews.length === 0 ? (
-          <div className="bg-white/[0.01] border border-dashed border-white/15 p-8 rounded-2xl text-center">
-            <p className="text-slate-500 text-xs italic">No commentary logs active for this catalog node yet.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {reviews.map((rev) => (
-              <div key={rev._id} className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center font-bold text-xs text-indigo-400">
-                      {rev.userName ? rev.userName[0].toUpperCase() : "U"}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-200">{rev.userName || "Anonymous"}</h4>
-                      <p className="text-[10px] text-slate-500">{rev.userEmail}</p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-mono text-slate-500 bg-white/5 px-2 py-0.5 rounded border border-white/5">
-                    {rev.date || "2026-06-21"}
-                  </span>
-                </div>
-                <p className="text-xs md:text-sm text-slate-300 leading-relaxed pl-9 font-sans">{rev.comment}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Interactive Reader Reviews & Rating System */}
+      <ReviewSection bookId={id} bookTitle={book.title} initialReviews={reviews} />
     </div>
   );
 };
